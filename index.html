@@ -60,6 +60,13 @@
   .detail tr.regrow td{padding-top:8px; font-weight:700; color:var(--muted); font-size:11px;
                        letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
   .detail tr.regrow td:hover{color:var(--ink); text-decoration:underline;}
+  .hostpick{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px;
+            padding:8px 10px; background:#f6f4ef; border:1px solid var(--line); font-size:12.5px;}
+  .hostpick label{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700;}
+  .hostpick select,.hostpick input{font:inherit; font-size:12.5px; padding:4px 6px; border:1px solid var(--line);}
+  .hostpick input{width:110px;}
+  .hostpick button{padding:4px 10px; font-size:12px;}
+  .hostpick .hostnote{color:var(--good); font-weight:700; font-size:11.5px;}
   h3{font-family:Georgia,serif; font-size:20px; margin:30px 0 4px;}
   .tblnote{font-size:13px; color:var(--muted); margin-bottom:10px;}
   table.stats{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); font-size:14px;}
@@ -114,11 +121,6 @@
       <span class="rangeval" id="regsizeval">5</span></div></div>
     <div class="fieldnote" id="fieldnote"></div>
   </div>
-  <div class="caveat" id="fbCaveat"><strong>Football note:</strong> the IHSA football playoff is a
-    seeded 32-team bracket per class, not geographic sectionals, and classification is set only after
-    the 256-team field is chosen. The field shown is the 2025 playoff qualifiers; both maps use
-    geographic grouping to make travel comparable across systems, so treat football figures as
-    structural estimates.</div>
 
   <div class="tabs">
     <button class="tab active" id="tabScenario">Scenario Explorer</button>
@@ -186,13 +188,12 @@
     Method: where actual IHSA assignments are unavailable, schools are grouped by recursive geographic
     bisection (balanced, contiguous splits), mirroring how sectional and regional boundaries are drawn;
     regional subdivisions are always modeled at the chosen size. Travel is one-way straight-line distance to the host site: the named IHSA sectional host where
-    assignments are actual, otherwise the most centrally located member school (host schools travel 0).
+    assignments are actual, otherwise the most centrally located member school (host schools travel 0). Any sectional's host can be reassigned from its roster panel — to another member, any IHSA school, or a custom venue by coordinates.
     School locations are city-level ZIP centroids, so figures understate true road miles by roughly
     15&ndash;25% and Chicago-to-Chicago trips read as zero. Recommended private paths =
     8 &times; private share of the field, rounded, kept between 1 and 4. Sources: 2025 girls flag
     football pairings; 2025&ndash;26 boys/girls lacrosse and boys volleyball assignments (Elgin and
-    O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings;
-    2025&ndash;26 football playoff brackets. Charter and other non-boundaried public schools are
+    O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools are
     treated as public. Verify status flags marked for review before publication.
   </footer>
 </div>
@@ -202,9 +203,9 @@ const RAW = {"schools":[{"n":"Abingdon (A.-Avon)","la":40.8023,"lo":-90.4009,"p"
 const DATA = RAW.schools;
 const ASSIGN = RAW.assign;
 const SPORTS = {SOB:"Soccer (B)",SOG:"Soccer (G)",VBG:"Volleyball (G)",VBB:"Volleyball (B)",
-BKB:"Basketball (B)",BKG:"Basketball (G)",CHC:"Cheerleading",DAC:"Dance",BA:"Baseball",
-SBG:"Softball (G)",FLGG:"Flag Football (G)",LAXB:"Lacrosse (B)",LAXG:"Lacrosse (G)",
-WPB:"Water Polo (B)",WPG:"Water Polo (G)",FB:"Football"};
+BKB:"Basketball (B)",BKG:"Basketball (G)",BA:"Baseball",SBG:"Softball (G)",
+FLGG:"Flag Football (G)",LAXB:"Lacrosse (B)",LAXG:"Lacrosse (G)",
+WPB:"Water Polo (B)",WPG:"Water Polo (G)"};
 const IL = [[42.508,-90.64],[42.494,-87.80],[41.76,-87.52],[39.0,-87.53],[38.5,-87.65],[38.0,-88.0],
 [37.80,-88.06],[37.42,-88.06],[37.15,-88.42],[36.98,-89.13],[37.22,-89.45],[37.7,-89.52],[38.0,-89.9],
 [38.6,-90.18],[38.87,-90.10],[38.96,-90.45],[39.4,-90.72],[39.75,-91.05],[40.0,-91.44],[40.5,-91.4],
@@ -246,7 +247,7 @@ function metricsFor(groups, regSize){
   const rows=[];
   groups.forEach((g,gi)=>{
     if(!g.members.length) return;
-    const secHost=pickHost(g.members, g.host);
+    const secHost=g.hostLoc ? g.hostLoc : pickHost(g.members, g.host);
     const nReg=Math.max(1,Math.round(g.members.length/regSize));
     const regs=bisect(g.members,nReg);
     regs.forEach((reg,ri)=>{
@@ -288,6 +289,8 @@ function hull(pts){
 }
 
 const mapState = {Current:{rows:[],sec:null,reg:null}, Proposed:{rows:[],sec:null,reg:null}};
+let hostOverrides = {Current:{}, Proposed:{}};
+let lastSig = "";
 
 function drawMap(which){
   const st=mapState[which], rows=st.rows;
@@ -386,8 +389,23 @@ function renderDetail(which){
   const nPriv=rows.filter(r=>r.s.p).length;
   const secMean=rows.reduce((s,r)=>s+r.secMi,0)/rows.length;
   const title=secName(which,st.sec)+(st.reg!==null?` — Regional ${st.reg+1}`:"");
+  const ov=hostOverrides[which][st.sec];
   let h=`<h4>${title}</h4>
-    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi</div>
+    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi</div>
+    <div class="hostpick">
+      <label>Sectional host</label>
+      <select id="hostSel${which}">
+        <optgroup label="Members of this sectional">
+          ${[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.s.n))].sort().map(n=>`<option value="m:${n}"${!ov&&n===rows[0].secHost?" selected":""}>${n}</option>`).join("")}
+        </optgroup>
+        <optgroup label="Other">
+          <option value="any">Any IHSA school…</option>
+          <option value="custom"${ov&&ov.custom?" selected":""}>Custom venue (name + coordinates)…</option>
+        </optgroup>
+      </select>
+      <span id="hostExtra${which}"></span>
+      ${ov?`<button id="hostReset${which}">Reset</button>`:""}
+    </div>`;
     <table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th></tr>`;
   let lastReg=-1;
   rows.forEach(r=>{
@@ -402,6 +420,46 @@ function renderDetail(which){
   el.querySelectorAll("tr.regrow td").forEach(td=>{
     td.onclick=()=>setSel(which,st.sec,+td.dataset.reg);
   });
+  wireHostPicker(which, st.sec);
+}
+
+function wireHostPicker(which, si){
+  const sel=document.getElementById("hostSel"+which);
+  const extra=document.getElementById("hostExtra"+which);
+  const reset=document.getElementById("hostReset"+which);
+  if(!sel) return;
+  if(reset) reset.onclick=()=>{ delete hostOverrides[which][si]; run(); };
+  sel.onchange=()=>{
+    const v=sel.value;
+    if(v.startsWith("m:")){
+      const s=byName[v.slice(2)];
+      hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
+      run();
+    }else if(v==="any"){
+      extra.innerHTML=`<input list="allschools${which}" id="anyIn${which}" placeholder="Type a school name…">
+        <datalist id="allschools${which}">${DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("")}</datalist>
+        <button id="anyGo${which}">Set</button>`;
+      document.getElementById("anyGo"+which).onclick=()=>{
+        const s=byName[document.getElementById("anyIn"+which).value];
+        if(!s){alert("School not found — pick a name from the list.");return;}
+        hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
+        run();
+      };
+    }else if(v==="custom"){
+      extra.innerHTML=`<input id="cn${which}" placeholder="Venue name">
+        <input id="cla${which}" type="number" step="0.0001" placeholder="Latitude">
+        <input id="clo${which}" type="number" step="0.0001" placeholder="Longitude">
+        <button id="cgo${which}">Set</button>`;
+      document.getElementById("cgo"+which).onclick=()=>{
+        const n=document.getElementById("cn"+which).value.trim()||"Custom venue";
+        const la=parseFloat(document.getElementById("cla"+which).value);
+        const lo=parseFloat(document.getElementById("clo"+which).value);
+        if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){alert("Enter Illinois coordinates (lat 36–43, lon −92 to −87). Right-click a spot in Google Maps to copy them.");return;}
+        hostOverrides[which][si]={n:n, la:la, lo:lo, custom:true};
+        run();
+      };
+    }
+  };
 }
 
 const $=id=>document.getElementById(id);
@@ -421,12 +479,15 @@ function run(){
   const priv=field.filter(d=>d.p), pub=field.filter(d=>!d.p);
   $("fieldnote").innerHTML=`<strong>${field.length}</strong> teams in field<br>${pub.length} public &middot; ${priv.length} private`;
   $("propsub").textContent=`${8-P} public sectionals + ${P} private-only path${P>1?"s":""}`;
-  $("fbCaveat").style.display = sp==="FB" ? "block" : "none";
 
   const rec=recommendPaths(field,priv);
   const share=field.length?(100*priv.length/field.length):0;
   $("recnote").className="recnote"+(P===rec?"":" off");
   $("recnote").textContent=`Recommended: ${rec} of 8 (${share.toFixed(0)}% private)`+(P===rec?"":` — showing ${P}`);
+
+  const sig=sp+"|"+kl+"|"+P+"|"+R;
+  const fresh = sig!==lastSig;
+  if(fresh){ hostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
 
   const hasReal=!!ASSIGN[sp];
   $("curBadge").className="srcbadge "+(hasReal?"real":"sim");
@@ -443,6 +504,7 @@ function run(){
   }else{
     curGroups=simGroups(field,8,"Sectional");
   }
+  curGroups.forEach((g,i)=>{ if(hostOverrides.Current[i]) g.hostLoc=hostOverrides.Current[i]; });
   const cur=metricsFor(curGroups,R);
 
   const pubGroups=simGroups(pub,8-P,"Public path");
@@ -450,11 +512,15 @@ function run(){
   const propGroups=pubGroups.concat(prvGroups);
   const propRows=[];
   propGroups.forEach((g,gi)=>{
+    if(hostOverrides.Proposed[gi]) g.hostLoc=hostOverrides.Proposed[gi];
     metricsFor([g],R).forEach(r=>{r.sec=gi; propRows.push(r);});
   });
 
-  mapState.Current={rows:cur,sec:null,reg:null};
-  mapState.Proposed={rows:propRows,sec:null,reg:null};
+  const keep = fresh ? {Current:{sec:null,reg:null},Proposed:{sec:null,reg:null}}
+                     : {Current:{sec:mapState.Current.sec,reg:mapState.Current.reg},
+                        Proposed:{sec:mapState.Proposed.sec,reg:mapState.Proposed.reg}};
+  mapState.Current={rows:cur,sec:keep.Current.sec,reg:keep.Current.reg};
+  mapState.Proposed={rows:propRows,sec:keep.Proposed.sec,reg:keep.Proposed.reg};
   ["Current","Proposed"].forEach(w=>{fillFilters(w); drawMap(w); renderDetail(w);});
 
   const curPriv=cur.filter(r=>r.s.p), curPub=cur.filter(r=>!r.s.p);

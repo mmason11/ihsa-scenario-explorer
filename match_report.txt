@@ -1,0 +1,7 @@
+NEW    Chicago (Kelvyn Park) (geocoded Chicago: 41.85452758620689,-87.67469195402299)
+NEW    Mackinaw (Deer Creek) (geocoded Mackinaw: 40.5396,-89.3458)
+NEW    Gibson City (Melvin-Sibley) (geocoded Gibson City: 40.4659,-88.3609)
+NEW    El Paso (Gridley) (geocoded El Paso: 40.7389,-89.012)
+LOOSE  Pana (H.S.) -> Pana
+NEW    St. Joseph (Ogden) (geocoded St. Joseph: 40.1207,-88.0472)
+NEW    Chicago (South Shore) (geocoded Chicago: 41.85452758620689,-87.67469195402299)
