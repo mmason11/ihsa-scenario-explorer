@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IHSA Postseason Scenario Explorer — Public / Private Separation</title>
+<style>
+  :root{
+    --ink:#1e2a38; --paper:#faf9f6; --line:#d8d4cb;
+    --public:#46608c; --private:#9e1b32; --accent:#9e1b32;
+    --good:#2e7d4f; --bad:#b5651d; --muted:#6b7280;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--paper); color:var(--ink);
+       font:15px/1.5 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1180px; margin:0 auto; padding:28px 24px 64px;}
+  header{border-bottom:3px solid var(--ink); padding-bottom:18px; margin-bottom:22px;}
+  .eyebrow{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:700;}
+  h1{font-family:Georgia,"Times New Roman",serif; font-size:34px; line-height:1.15; margin-top:6px; font-weight:700;}
+  .sub{color:var(--muted); margin-top:8px; max-width:70ch;}
+  .controls{display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end;
+            background:#fff; border:1px solid var(--line); padding:16px 18px; margin-bottom:10px;}
+  .ctl label{display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+             color:var(--muted); font-weight:700; margin-bottom:5px;}
+  select,input[type=range]{font:inherit;}
+  select{padding:7px 10px; border:1px solid var(--line); background:#fff; min-width:150px;}
+  .rangewrap{display:flex; align-items:center; gap:10px;}
+  .rangeval{font-variant-numeric:tabular-nums; font-weight:700; min-width:2ch; text-align:center;}
+  .recnote{font-size:12px; color:var(--good); font-weight:700; margin-top:4px;}
+  .recnote.off{color:var(--muted); font-weight:400;}
+  .fieldnote{margin-left:auto; text-align:right; font-size:13px; color:var(--muted);}
+  .fieldnote strong{color:var(--ink); font-size:16px;}
+  .caveat{display:none; background:#fdf6ec; border:1px solid #e3cfa4; padding:10px 14px;
+          font-size:13.5px; margin-bottom:16px;}
+  .maps{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-bottom:26px;}
+  @media(max-width:860px){.maps{grid-template-columns:1fr;}}
+  .mapcard{background:#fff; border:1px solid var(--line);}
+  .mapcard h2{font-family:Georgia,serif; font-size:19px; padding:12px 16px 0;}
+  .mapcard .mapsub{font-size:12.5px; color:var(--muted); padding:2px 16px 8px;}
+  .srcbadge{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.07em;
+            text-transform:uppercase; padding:1px 7px; border-radius:2px; margin-left:8px; vertical-align:2px;}
+  .srcbadge.real{background:#e4efe7; color:#2e7d4f;}
+  .srcbadge.sim{background:#eee9df; color:#8a7332;}
+  .mapfilters{display:flex; gap:10px; padding:0 16px 10px; flex-wrap:wrap;}
+  .mapfilters select{min-width:0; flex:1; font-size:13px; padding:5px 8px;}
+  svg{display:block; width:100%; height:auto;}
+  svg .grp{cursor:pointer;}
+  .legend{display:flex; gap:18px; padding:8px 16px 6px; font-size:12.5px; color:var(--muted); flex-wrap:wrap;}
+  .key{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--public);display:inline-block;}
+  .dia{width:10px;height:10px;background:var(--private);display:inline-block;transform:rotate(45deg);}
+  .detail{border-top:1px solid var(--line); padding:12px 16px 16px; font-size:13.5px; min-height:64px;}
+  .detail .hint{color:var(--muted); font-style:italic;}
+  .detail h4{font-family:Georgia,serif; font-size:15.5px; margin-bottom:2px;}
+  .detail .dmeta{color:var(--muted); font-size:12.5px; margin-bottom:8px;}
+  .detail table{width:100%; border-collapse:collapse; font-size:12.8px; background:transparent; border:0;}
+  .detail th,.detail td{padding:3px 8px 3px 0; border:0; text-align:left; font-variant-numeric:tabular-nums;}
+  .detail th{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); background:transparent;}
+  .detail td.mi{text-align:right; white-space:nowrap;}
+  .detail tr.regrow td{padding-top:8px; font-weight:700; color:var(--muted); font-size:11px;
+                       letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
+  .detail tr.regrow td:hover{color:var(--ink); text-decoration:underline;}
+  .hostpick{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px;
+            padding:8px 10px; background:#f6f4ef; border:1px solid var(--line); font-size:12.5px;}
+  .hostpick label{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700;}
+  .hostpick select,.hostpick input{font:inherit; font-size:12.5px; padding:4px 6px; border:1px solid var(--line);}
+  .hostpick input{width:110px;}
+  .hostpick button{padding:4px 10px; font-size:12px;}
+  .hostpick .hostnote{color:var(--good); font-weight:700; font-size:11.5px;}
+  h3{font-family:Georgia,serif; font-size:20px; margin:30px 0 4px;}
+  .tblnote{font-size:13px; color:var(--muted); margin-bottom:10px;}
+  table.stats{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); font-size:14px;}
+  table.stats th,table.stats td{padding:8px 12px; text-align:right; border-bottom:1px solid var(--line);
+        font-variant-numeric:tabular-nums;}
+  table.stats th{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); background:#f3f1ec;}
+  table.stats th:first-child,table.stats td:first-child{text-align:left;}
+  td.up{color:var(--bad); font-weight:700;}
+  td.down{color:var(--good); font-weight:700;}
+  tr.hl td{background:#fdf3f4;}
+  .privtag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.06em;
+           color:#fff; background:var(--private); padding:1px 6px; border-radius:2px; margin-left:6px; vertical-align:1px;}
+  .btnrow{margin:14px 0 0;}
+  button{font:inherit; font-weight:700; background:var(--ink); color:#fff; border:0;
+         padding:9px 16px; cursor:pointer;}
+  button:hover{background:#33445a;}
+  .tabs{display:flex; gap:0; border-bottom:2px solid var(--ink); margin-bottom:20px;}
+  .tab{font:inherit; font-weight:700; background:transparent; color:var(--muted); border:0;
+       padding:10px 22px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px;}
+  .tab.active{color:var(--ink); border-bottom-color:var(--accent);}
+  .tab:hover{background:transparent; color:var(--ink);}
+  .datatools{display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;}
+  .datatools input{font:inherit; padding:7px 10px; border:1px solid var(--line); min-width:260px;}
+  .datatools .count{font-size:13px; color:var(--muted);}
+  table.stats th.sortable{cursor:pointer; user-select:none;}
+  table.stats th.sortable:hover{color:var(--ink);}
+  table.stats th .arr{font-size:9px;}
+  footer{margin-top:44px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:14px; max-width:95ch;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">IHSA State Series Proposal Analysis</div>
+    <h1>Postseason Scenario Explorer: Public / Private Separation Until the Final&nbsp;8</h1>
+    <div class="sub">Compares current sectional assignment against a proposed system where private schools
+      compete on their own sectional paths and cannot meet a public school before the super-sectional
+      round. For flag football, lacrosse, boys volleyball, and water polo the current side uses
+      <strong>actual IHSA sectional assignments</strong>; other sports use a simulated geographic grouping.
+      Filter each map by sectional and regional, or click groups directly.</div>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><label>Sport</label><select id="sport"></select></div>
+    <div class="ctl"><label>Class</label><select id="klass"></select></div>
+    <div class="ctl"><label>Private paths (of 8)</label>
+      <div class="rangewrap"><input type="range" id="privpaths" min="1" max="4" value="1">
+      <span class="rangeval" id="privpathsval">1</span></div>
+      <div class="recnote" id="recnote"></div></div>
+    <div class="ctl"><label>Regional size</label>
+      <div class="rangewrap"><input type="range" id="regsize" min="4" max="6" value="5">
+      <span class="rangeval" id="regsizeval">5</span></div></div>
+    <div class="fieldnote" id="fieldnote"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tabScenario">Scenario Explorer</button>
+    <button class="tab" id="tabData">Full Data</button>
+  </div>
+
+  <div id="viewScenario">
+  <div class="maps">
+    <div class="mapcard">
+      <h2>Current system <span class="srcbadge" id="curBadge"></span></h2>
+      <div class="mapsub" id="cursub">All schools mixed &middot; 8 sectionals</div>
+      <div class="mapfilters">
+        <select id="secSelCurrent"></select>
+        <select id="regSelCurrent"></select>
+      </div>
+      <div id="mapCurrent"></div>
+      <div class="legend">
+        <span class="key"><span class="dot"></span> Public</span>
+        <span class="key"><span class="dia"></span> Private</span>
+        <span class="key">Click a sectional, or use the filters</span>
+      </div>
+      <div class="detail" id="detCurrent"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
+    </div>
+    <div class="mapcard">
+      <h2>Proposed system <span class="srcbadge sim">modeled</span></h2>
+      <div class="mapsub" id="propsub"></div>
+      <div class="mapfilters">
+        <select id="secSelProposed"></select>
+        <select id="regSelProposed"></select>
+      </div>
+      <div id="mapProposed"></div>
+      <div class="legend">
+        <span class="key"><span class="dot"></span> Public sectionals</span>
+        <span class="key"><span class="dia"></span> Private-only path(s)</span>
+        <span class="key">Click a sectional, or use the filters</span>
+      </div>
+      <div class="detail" id="detProposed"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
+    </div>
+  </div>
+
+  <h3>Travel comparison</h3>
+  <div class="tblnote">One-way straight-line miles to the host site: the named IHSA host where assignments are actual, otherwise the most centrally located school in the group. &ldquo;Sectional&rdquo; is the round that determines the final 8.</div>
+  <table class="stats" id="statTable"></table>
+
+  <h3>Most-affected schools under the proposal</h3>
+  <div class="tblnote">Schools whose sectional-round travel changes the most, current vs. proposed.</div>
+  <table class="stats" id="worstTable"></table>
+
+  <div class="btnrow"><button id="dl">Download per-school detail (CSV)</button></div>
+  </div><!-- /viewScenario -->
+
+  <div id="viewData" style="display:none">
+    <h3>Full field data</h3>
+    <div class="tblnote">Every school in the selected sport and class with its current and proposed
+      assignments and travel. Click a column header to sort; type to filter.</div>
+    <div class="datatools">
+      <input type="search" id="dataSearch" placeholder="Filter by school, sectional, or path…">
+      <span class="count" id="dataCount"></span>
+      <button id="dl2" style="margin-left:auto">Download CSV</button>
+    </div>
+    <table class="stats" id="dataTable"></table>
+  </div><!-- /viewData -->
+
+  <footer>
+    Method: where actual IHSA assignments are unavailable, schools are grouped by recursive geographic
+    bisection (balanced, contiguous splits), mirroring how sectional and regional boundaries are drawn;
+    regional subdivisions are always modeled at the chosen size. Travel is one-way straight-line distance to the host site: the named IHSA sectional host where
+    assignments are actual, otherwise the most centrally located member school (host schools travel 0). Any sectional's host can be reassigned from its roster panel — to another member, any IHSA school, or a custom venue by coordinates.
+    School locations are city-level ZIP centroids, so figures understate true road miles by roughly
+    15&ndash;25% and Chicago-to-Chicago trips read as zero. Recommended private paths =
+    8 &times; private share of the field, rounded, kept between 1 and 4. Sources: 2025 girls flag
+    football pairings; 2025&ndash;26 boys/girls lacrosse and boys volleyball assignments (Elgin and
+    O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools are
+    treated as public. Verify status flags marked for review before publication.
+  </footer>
+</div>
+
+<script>
+const RAW = __RAW_DATA_JSON__;
+const DATA = RAW.schools;
+const ASSIGN = RAW.assign;
+const SPORTS = {SOB:"Soccer (B)",SOG:"Soccer (G)",VBG:"Volleyball (G)",VBB:"Volleyball (B)",
+BKB:"Basketball (B)",BKG:"Basketball (G)",BA:"Baseball",SBG:"Softball (G)",
+FLGG:"Flag Football (G)",LAXB:"Lacrosse (B)",LAXG:"Lacrosse (G)",
+WPB:"Water Polo (B)",WPG:"Water Polo (G)"};
+const IL = [[42.508,-90.64],[42.494,-87.80],[41.76,-87.52],[39.0,-87.53],[38.5,-87.65],[38.0,-88.0],
+[37.80,-88.06],[37.42,-88.06],[37.15,-88.42],[36.98,-89.13],[37.22,-89.45],[37.7,-89.52],[38.0,-89.9],
+[38.6,-90.18],[38.87,-90.10],[38.96,-90.45],[39.4,-90.72],[39.75,-91.05],[40.0,-91.44],[40.5,-91.4],
+[41.0,-91.05],[41.42,-91.05],[41.58,-90.4],[41.78,-90.25],[42.0,-90.16],[42.2,-90.42],[42.508,-90.64]];
+const HUES = ["#46608c","#7a5c9e","#2e7d6f","#b5651d","#5b7a3a","#8c4670","#3a6f8c","#8a7332"];
+const byName = {}; DATA.forEach(d=>byName[d.n]=d);
+
+function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,p1=a*r,p2=c*r,dp=(c-a)*r,dl=(d-b)*r;
+  const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));}
+
+function bisect(arr,n){
+  if(n<=1||arr.length<=1) return [arr];
+  const nl=Math.floor(n/2), nr=n-nl, frac=nl/n;
+  const mlat=arr.reduce((s,x)=>s+x.la,0)/arr.length;
+  const latSpan=Math.max(...arr.map(x=>x.la))-Math.min(...arr.map(x=>x.la));
+  const lonSpan=(Math.max(...arr.map(x=>x.lo))-Math.min(...arr.map(x=>x.lo)))*Math.cos(mlat*Math.PI/180);
+  const key=latSpan>=lonSpan?"la":"lo";
+  const s=[...arr].sort((a,b)=>a[key]-b[key]);
+  let k=Math.round(s.length*frac); k=Math.max(1,Math.min(s.length-1,k));
+  return [...bisect(s.slice(0,k),nl),...bisect(s.slice(k),nr)];
+}
+
+// host = the member school closest to the group's center (a real potential site),
+// unless a designated host is supplied (actual IHSA sectional hosts).
+function pickHost(members, hostName){
+  if(hostName){
+    const h=members.find(m=>m.n===hostName)||byName[hostName];
+    if(h) return h;
+  }
+  const clat=members.reduce((s,x)=>s+x.la,0)/members.length;
+  const clon=members.reduce((s,x)=>s+x.lo,0)/members.length;
+  let best=members[0], bd=Infinity;
+  members.forEach(m=>{const d=hav(m.la,m.lo,clat,clon); if(d<bd){bd=d;best=m;}});
+  return best;
+}
+
+function metricsFor(groups, regSize){
+  const rows=[];
+  groups.forEach((g,gi)=>{
+    if(!g.members.length) return;
+    const secHost=g.hostLoc ? g.hostLoc : pickHost(g.members, g.host);
+    const nReg=Math.max(1,Math.round(g.members.length/regSize));
+    const regs=bisect(g.members,nReg);
+    regs.forEach((reg,ri)=>{
+      const regHost=pickHost(reg);
+      reg.forEach(x=>rows.push({s:x, sec:gi, secName:g.name, reg:ri,
+        secHost:secHost.n, regHost:regHost.n,
+        secMi:hav(x.la,x.lo,secHost.la,secHost.lo), regMi:hav(x.la,x.lo,regHost.la,regHost.lo)}));
+    });
+  });
+  return rows;
+}
+
+function simGroups(field,n,label){
+  return bisect(field,Math.min(n,Math.max(1,field.length))).map((m,i)=>({name:`${label} ${i+1}`,members:m}));
+}
+
+function summarize(rows){
+  if(!rows.length) return null;
+  const sm=rows.map(r=>r.secMi), rm=rows.map(r=>r.regMi);
+  const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+  return {n:rows.length, regMean:mean(rm), regMax:Math.max(...rm),
+          secMean:mean(sm), secMax:Math.max(...sm),
+          over75:sm.filter(x=>x>75).length, over150:sm.filter(x=>x>150).length};
+}
+
+function proj(la,lo,W,H,pad){
+  const la0=36.9,la1=42.6,lo0=-91.6,lo1=-87.4;
+  return [pad+(lo-lo0)/(lo1-lo0)*(W-2*pad), pad+(la1-la)/(la1-la0)*(H-2*pad)];
+}
+
+function hull(pts){
+  if(pts.length<3) return pts;
+  const p=[...pts].sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[],up=[];
+  for(const pt of p){while(lo.length>=2&&cross(lo[lo.length-2],lo[lo.length-1],pt)<=0)lo.pop();lo.push(pt);}
+  for(const pt of p.reverse()){while(up.length>=2&&cross(up[up.length-2],up[up.length-1],pt)<=0)up.pop();up.push(pt);}
+  return lo.slice(0,-1).concat(up.slice(0,-1));
+}
+
+const mapState = {Current:{rows:[],sec:null,reg:null}, Proposed:{rows:[],sec:null,reg:null}};
+let hostOverrides = {Current:{}, Proposed:{}};
+let lastSig = "";
+
+function drawMap(which){
+  const st=mapState[which], rows=st.rows;
+  const W=520,H=640,pad=18;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  const outline=IL.map(([la,lo],i)=>{const[x,y]=proj(la,lo,W,H,pad);return(i?"L":"M")+x.toFixed(1)+" "+y.toFixed(1);}).join("");
+  svg+=`<path d="${outline}Z" fill="#f1efe9" stroke="#b9b3a6" stroke-width="1.2"/>`;
+  const bySec={};
+  rows.forEach(r=>{(bySec[r.sec]=bySec[r.sec]||[]).push(r);});
+  const secDim=si=>(st.sec!==null&&+si!==st.sec);
+  // sectional hulls
+  Object.entries(bySec).forEach(([si,g])=>{
+    const col=HUES[si%HUES.length], op=secDim(si)?0.05:(+si===st.sec?0.20:0.12);
+    const pts=g.map(r=>proj(r.s.la,r.s.lo,W,H,pad));
+    if(pts.length>=3){
+      const h=hull(pts);
+      svg+=`<path class="grp" data-sec="${si}" d="M${h.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")}Z"
+        fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-opacity="${secDim(si)?0.15:0.5}" stroke-width="${+si===st.sec?2:1}"/>`;
+    }
+  });
+  // regional sub-hull when a regional is selected
+  if(st.sec!==null&&st.reg!==null&&bySec[st.sec]){
+    const col=HUES[st.sec%HUES.length];
+    const g=bySec[st.sec].filter(r=>r.reg===st.reg);
+    const pts=g.map(r=>proj(r.s.la,r.s.lo,W,H,pad));
+    if(pts.length>=3){
+      const h=hull(pts);
+      svg+=`<path d="M${h.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")}Z"
+        fill="${col}" fill-opacity="0.30" stroke="${col}" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+    }
+  }
+  // points
+  Object.entries(bySec).forEach(([si,g])=>{
+    const col=HUES[si%HUES.length];
+    g.forEach(r=>{
+      let pop=1;
+      if(secDim(si)) pop=0.15;
+      else if(st.sec!==null&&st.reg!==null&&r.reg!==st.reg) pop=0.35;
+      const[x,y]=proj(r.s.la,r.s.lo,W,H,pad);
+      const t=`<title>${r.s.n} — ${r.secName}, Regional ${r.reg+1} — ${r.regMi.toFixed(0)} mi to regional host (${r.regHost}), ${r.secMi.toFixed(0)} mi to sectional host (${r.secHost})</title>`;
+      if(r.s.p){
+        svg+=`<rect class="grp" data-sec="${si}" x="${(x-3.4).toFixed(1)}" y="${(y-3.4).toFixed(1)}" width="6.8" height="6.8"
+          transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill="#9e1b32" opacity="${pop}" stroke="#fff" stroke-width="0.8">${t}</rect>`;
+      }else{
+        svg+=`<circle class="grp" data-sec="${si}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.9"
+          fill="${col}" opacity="${pop}" stroke="#fff" stroke-width="0.7">${t}</circle>`;
+      }
+    });
+  });
+  svg+="</svg>";
+  const el=document.getElementById("map"+which);
+  el.innerHTML=svg;
+  el.querySelector("svg").addEventListener("click",e=>{
+    const g=e.target.closest(".grp");
+    if(!g){setSel(which,null,null);return;}
+    setSel(which,+g.dataset.sec,null);
+  });
+}
+
+function secName(which,si){
+  const r=mapState[which].rows.find(r=>r.sec===si);
+  return r?r.secName:`Sectional ${si+1}`;
+}
+
+function fillFilters(which){
+  const st=mapState[which];
+  const secs=[...new Set(st.rows.map(r=>r.sec))].sort((a,b)=>a-b);
+  const sSel=document.getElementById("secSel"+which);
+  sSel.innerHTML=`<option value="">All sectionals</option>`+
+    secs.map(si=>`<option value="${si}"${st.sec===si?" selected":""}>${secName(which,si)}</option>`).join("");
+  const rSel=document.getElementById("regSel"+which);
+  if(st.sec===null){
+    rSel.innerHTML=`<option value="">All regionals</option>`;
+    rSel.disabled=true;
+  }else{
+    const regs=[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.reg))].sort((a,b)=>a-b);
+    rSel.disabled=false;
+    rSel.innerHTML=`<option value="">All regionals</option>`+
+      regs.map(ri=>`<option value="${ri}"${st.reg===ri?" selected":""}>Regional ${ri+1}</option>`).join("");
+  }
+}
+
+function setSel(which,sec,reg){
+  const st=mapState[which];
+  st.sec=sec; st.reg=reg;
+  fillFilters(which); drawMap(which); renderDetail(which);
+}
+
+function renderDetail(which){
+  const st=mapState[which], el=document.getElementById("det"+which);
+  if(st.sec===null){el.innerHTML='<span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span>';return;}
+  let rows=st.rows.filter(r=>r.sec===st.sec);
+  if(st.reg!==null) rows=rows.filter(r=>r.reg===st.reg);
+  rows.sort((a,b)=>a.reg-b.reg||b.secMi-a.secMi);
+  if(!rows.length){el.innerHTML='<span class="hint">No schools in this group.</span>';return;}
+  const nPriv=rows.filter(r=>r.s.p).length;
+  const secMean=rows.reduce((s,r)=>s+r.secMi,0)/rows.length;
+  const title=secName(which,st.sec)+(st.reg!==null?` — Regional ${st.reg+1}`:"");
+  const ov=hostOverrides[which][st.sec];
+  let h=`<h4>${title}</h4>
+    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi</div>
+    <div class="hostpick">
+      <label>Sectional host</label>
+      <select id="hostSel${which}">
+        <optgroup label="Members of this sectional">
+          ${[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.s.n))].sort().map(n=>`<option value="m:${n}"${!ov&&n===rows[0].secHost?" selected":""}>${n}</option>`).join("")}
+        </optgroup>
+        <optgroup label="Other">
+          <option value="any">Any IHSA school…</option>
+          <option value="custom"${ov&&ov.custom?" selected":""}>Custom venue (name + coordinates)…</option>
+        </optgroup>
+      </select>
+      <span id="hostExtra${which}"></span>
+      ${ov?`<button id="hostReset${which}">Reset</button>`:""}
+    </div>`;
+    <table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th></tr>`;
+  let lastReg=-1;
+  rows.forEach(r=>{
+    if(st.reg===null&&r.reg!==lastReg){
+      h+=`<tr class="regrow"><td colspan="3" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
+      lastReg=r.reg;
+    }
+    h+=`<tr><td>${r.s.n}${r.s.p?'<span class="privtag">PRIVATE</span>':""}</td>
+      <td class="mi">${r.regMi.toFixed(0)}</td><td class="mi">${r.secMi.toFixed(0)}</td></tr>`;
+  });
+  el.innerHTML=h+"</table>";
+  el.querySelectorAll("tr.regrow td").forEach(td=>{
+    td.onclick=()=>setSel(which,st.sec,+td.dataset.reg);
+  });
+  wireHostPicker(which, st.sec);
+}
+
+function wireHostPicker(which, si){
+  const sel=document.getElementById("hostSel"+which);
+  const extra=document.getElementById("hostExtra"+which);
+  const reset=document.getElementById("hostReset"+which);
+  if(!sel) return;
+  if(reset) reset.onclick=()=>{ delete hostOverrides[which][si]; run(); };
+  sel.onchange=()=>{
+    const v=sel.value;
+    if(v.startsWith("m:")){
+      const s=byName[v.slice(2)];
+      hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
+      run();
+    }else if(v==="any"){
+      extra.innerHTML=`<input list="allschools${which}" id="anyIn${which}" placeholder="Type a school name…">
+        <datalist id="allschools${which}">${DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("")}</datalist>
+        <button id="anyGo${which}">Set</button>`;
+      document.getElementById("anyGo"+which).onclick=()=>{
+        const s=byName[document.getElementById("anyIn"+which).value];
+        if(!s){alert("School not found — pick a name from the list.");return;}
+        hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
+        run();
+      };
+    }else if(v==="custom"){
+      extra.innerHTML=`<input id="cn${which}" placeholder="Venue name">
+        <input id="cla${which}" type="number" step="0.0001" placeholder="Latitude">
+        <input id="clo${which}" type="number" step="0.0001" placeholder="Longitude">
+        <button id="cgo${which}">Set</button>`;
+      document.getElementById("cgo"+which).onclick=()=>{
+        const n=document.getElementById("cn"+which).value.trim()||"Custom venue";
+        const la=parseFloat(document.getElementById("cla"+which).value);
+        const lo=parseFloat(document.getElementById("clo"+which).value);
+        if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){alert("Enter Illinois coordinates (lat 36–43, lon −92 to −87). Right-click a spot in Google Maps to copy them.");return;}
+        hostOverrides[which][si]={n:n, la:la, lo:lo, custom:true};
+        run();
+      };
+    }
+  };
+}
+
+const $=id=>document.getElementById(id);
+let lastDetail=[];
+function fmt(x){return x==null?"—":x.toFixed(1);}
+
+function recommendPaths(field,priv){
+  if(!priv.length) return 1;
+  const share=priv.length/field.length;
+  return Math.min(4,Math.max(1,Math.round(8*share)));
+}
+
+function run(){
+  const sp=$("sport").value, kl=$("klass").value;
+  const P=+$("privpaths").value, R=+$("regsize").value;
+  const field=DATA.filter(d=>d.c[sp]===kl);
+  const priv=field.filter(d=>d.p), pub=field.filter(d=>!d.p);
+  $("fieldnote").innerHTML=`<strong>${field.length}</strong> teams in field<br>${pub.length} public &middot; ${priv.length} private`;
+  $("propsub").textContent=`${8-P} public sectionals + ${P} private-only path${P>1?"s":""}`;
+
+  const rec=recommendPaths(field,priv);
+  const share=field.length?(100*priv.length/field.length):0;
+  $("recnote").className="recnote"+(P===rec?"":" off");
+  $("recnote").textContent=`Recommended: ${rec} of 8 (${share.toFixed(0)}% private)`+(P===rec?"":` — showing ${P}`);
+
+  const sig=sp+"|"+kl+"|"+P+"|"+R;
+  const fresh = sig!==lastSig;
+  if(fresh){ hostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
+
+  const hasReal=!!ASSIGN[sp];
+  $("curBadge").className="srcbadge "+(hasReal?"real":"sim");
+  $("curBadge").textContent=hasReal?"actual IHSA":"modeled";
+  $("cursub").textContent=hasReal
+    ? "Actual sectional assignments (regionals modeled at chosen size)"
+    : "All schools mixed · 8 geographic sectionals (modeled)";
+
+  let curGroups;
+  if(hasReal){
+    curGroups=ASSIGN[sp].map(sec=>({name:sec.name,
+      host:sec.name.replace(/\s+Sectional\s*$/,""),
+      members:sec.schools.map(n=>byName[n]).filter(Boolean)}));
+  }else{
+    curGroups=simGroups(field,8,"Sectional");
+  }
+  curGroups.forEach((g,i)=>{ if(hostOverrides.Current[i]) g.hostLoc=hostOverrides.Current[i]; });
+  const cur=metricsFor(curGroups,R);
+
+  const pubGroups=simGroups(pub,8-P,"Public path");
+  const prvGroups=priv.length?simGroups(priv,P,"Private path"):[];
+  const propGroups=pubGroups.concat(prvGroups);
+  const propRows=[];
+  propGroups.forEach((g,gi)=>{
+    if(hostOverrides.Proposed[gi]) g.hostLoc=hostOverrides.Proposed[gi];
+    metricsFor([g],R).forEach(r=>{r.sec=gi; propRows.push(r);});
+  });
+
+  const keep = fresh ? {Current:{sec:null,reg:null},Proposed:{sec:null,reg:null}}
+                     : {Current:{sec:mapState.Current.sec,reg:mapState.Current.reg},
+                        Proposed:{sec:mapState.Proposed.sec,reg:mapState.Proposed.reg}};
+  mapState.Current={rows:cur,sec:keep.Current.sec,reg:keep.Current.reg};
+  mapState.Proposed={rows:propRows,sec:keep.Proposed.sec,reg:keep.Proposed.reg};
+  ["Current","Proposed"].forEach(w=>{fillFilters(w); drawMap(w); renderDetail(w);});
+
+  const curPriv=cur.filter(r=>r.s.p), curPub=cur.filter(r=>!r.s.p);
+  const pubRows=propRows.filter(r=>!r.s.p), prvRows=propRows.filter(r=>r.s.p);
+  const S={ca:summarize(cur),cp:summarize(curPriv),cu:summarize(curPub),
+           pp:summarize(pubRows),pv:summarize(prvRows)};
+  const rows=[
+    ["Current — all teams",S.ca],["Current — public",S.cu],["Current — private",S.cp],
+    ["Proposed — public",S.pp],["Proposed — private",S.pv]];
+  let h=`<tr><th>Scenario</th><th>Teams</th><th>Regional avg</th><th>Regional max</th>
+    <th>Sectional avg</th><th>Sectional max</th><th>&gt;75 mi</th><th>&gt;150 mi</th></tr>`;
+  rows.forEach(([lab,s])=>{
+    if(!s){h+=`<tr><td>${lab}</td><td colspan="7">no teams</td></tr>`;return;}
+    const hl=lab.includes("Proposed — private")?' class="hl"':"";
+    h+=`<tr${hl}><td>${lab}</td><td>${s.n}</td><td>${fmt(s.regMean)}</td><td>${fmt(s.regMax)}</td>
+      <td>${fmt(s.secMean)}</td><td>${fmt(s.secMax)}</td><td>${s.over75}</td><td>${s.over150}</td></tr>`;
+  });
+  if(S.cp&&S.pv){
+    const dMean=S.pv.secMean-S.cp.secMean, dMax=S.pv.secMax-S.cp.secMax;
+    h+=`<tr><td><strong>Private change (proposed − current)</strong></td><td></td><td></td><td></td>
+      <td class="${dMean>0?"up":"down"}">${dMean>0?"+":""}${dMean.toFixed(1)}</td>
+      <td class="${dMax>0?"up":"down"}">${dMax>0?"+":""}${dMax.toFixed(1)}</td><td></td><td></td></tr>`;
+  }
+  $("statTable").innerHTML=h;
+
+  const curBy={}; cur.forEach(r=>curBy[r.s.n]=r);
+  const detail=[];
+  propRows.forEach(r=>{
+    const c=curBy[r.s.n]; if(!c) return;
+    detail.push({school:r.s.n, priv:r.s.p,
+                 curSecName:c.secName, curRegNum:c.reg+1, curRegHost:c.regHost, curSecHost:c.secHost,
+                 propSecName:r.secName, propRegNum:r.reg+1, propRegHost:r.regHost, propSecHost:r.secHost,
+                 curReg:c.regMi, curSec:c.secMi,
+                 propReg:r.regMi, propSec:r.secMi,
+                 dReg:r.regMi-c.regMi, dSec:r.secMi-c.secMi});
+  });
+  lastDetail=detail;
+  renderDataTable();
+  const worst=[...detail].sort((a,b)=>b.dSec-a.dSec).slice(0,12);
+  let w=`<tr><th>School</th><th>Regional (now)</th><th>Sectional (now)</th>
+    <th>Regional (proposed)</th><th>Sectional (proposed)</th><th>Change (regional)</th><th>Change (sectional)</th></tr>`;
+  worst.forEach(d=>{
+    w+=`<tr><td>${d.school}${d.priv?'<span class="privtag">PRIVATE</span>':""}</td>
+      <td>${d.curReg.toFixed(0)}</td><td>${d.curSec.toFixed(0)}</td>
+      <td>${d.propReg.toFixed(0)}</td><td>${d.propSec.toFixed(0)}</td>
+      <td class="${d.dReg>0?"up":"down"}">${d.dReg>0?"+":""}${d.dReg.toFixed(0)} mi</td>
+      <td class="${d.dSec>0?"up":"down"}">${d.dSec>0?"+":""}${d.dSec.toFixed(0)} mi</td></tr>`;
+  });
+  $("worstTable").innerHTML=w;
+}
+
+function applyRecommendation(){
+  const sp=$("sport").value, kl=$("klass").value;
+  const field=DATA.filter(d=>d.c[sp]===kl);
+  const rec=recommendPaths(field,field.filter(d=>d.p));
+  $("privpaths").value=rec;
+  $("privpathsval").textContent=rec;
+}
+
+function fillClasses(){
+  const sp=$("sport").value;
+  const cls=[...new Set(DATA.map(d=>d.c[sp]).filter(Boolean))].sort();
+  $("klass").innerHTML=cls.map(c=>`<option value="${c}">${c==="S"?"Single class":c}</option>`).join("");
+}
+
+["Current","Proposed"].forEach(w=>{
+  document.getElementById("secSel"+w).onchange=e=>{
+    setSel(w, e.target.value===""?null:+e.target.value, null);
+  };
+  document.getElementById("regSel"+w).onchange=e=>{
+    setSel(w, mapState[w].sec, e.target.value===""?null:+e.target.value);
+  };
+});
+
+// ---- full data tab
+let dataSort={key:"school",dir:1};
+const DCOLS=[
+  ["school","School",false],["curSecName","Current sectional",false],["curRegNum","Reg #",true],
+  ["curSec","Sec mi (now)",true],["propSecName","Proposed path",false],["propRegNum","Reg #",true],
+  ["propSec","Sec mi (prop.)",true],["dReg","Δ regional",true],["dSec","Δ sectional",true]];
+
+function renderDataTable(){
+  const q=($("dataSearch").value||"").toLowerCase();
+  let rows=lastDetail.filter(d=>!q||d.school.toLowerCase().includes(q)
+    ||d.curSecName.toLowerCase().includes(q)||d.propSecName.toLowerCase().includes(q));
+  const k=dataSort.key, dir=dataSort.dir;
+  rows=[...rows].sort((a,b)=>{
+    const x=a[k],y=b[k];
+    return (typeof x==="number"? x-y : String(x).localeCompare(String(y)))*dir;
+  });
+  $("dataCount").textContent=`${rows.length} of ${lastDetail.length} schools`;
+  let h="<tr>"+DCOLS.map(([key,lab])=>{
+    const arr=dataSort.key===key?(dataSort.dir>0?" ▲":" ▼"):"";
+    return `<th class="sortable" data-key="${key}">${lab}<span class="arr">${arr}</span></th>`;
+  }).join("")+"</tr>";
+  rows.forEach(d=>{
+    h+=`<tr><td style="text-align:left">${d.school}${d.priv?'<span class="privtag">PRIVATE</span>':""}</td>
+      <td style="text-align:left">${d.curSecName}</td><td>${d.curRegNum}</td>
+      <td>${d.curSec.toFixed(0)}</td>
+      <td style="text-align:left">${d.propSecName}</td><td>${d.propRegNum}</td>
+      <td>${d.propSec.toFixed(0)}</td>
+      <td class="${d.dReg>0.5?"up":d.dReg<-0.5?"down":""}">${d.dReg>0?"+":""}${d.dReg.toFixed(0)}</td>
+      <td class="${d.dSec>0.5?"up":d.dSec<-0.5?"down":""}">${d.dSec>0?"+":""}${d.dSec.toFixed(0)}</td></tr>`;
+  });
+  $("dataTable").innerHTML=h;
+  $("dataTable").querySelectorAll("th.sortable").forEach(th=>{
+    th.onclick=()=>{
+      const key=th.dataset.key;
+      dataSort = dataSort.key===key ? {key,dir:-dataSort.dir} : {key,dir:1};
+      renderDataTable();
+    };
+  });
+}
+
+function downloadCSV(){
+  const head="school,is_private,current_sectional,current_regional,current_regional_host,current_sectional_host,proposed_path,proposed_regional,proposed_regional_host,proposed_sectional_host,current_regional_mi,current_sectional_mi,proposed_regional_mi,proposed_sectional_mi,change_regional_mi,change_sectional_mi\n";
+  const body=lastDetail.map(d=>[JSON.stringify(d.school),d.priv,JSON.stringify(d.curSecName),d.curRegNum,
+    JSON.stringify(d.curRegHost),JSON.stringify(d.curSecHost),JSON.stringify(d.propSecName),d.propRegNum,
+    JSON.stringify(d.propRegHost),JSON.stringify(d.propSecHost),
+    d.curReg.toFixed(1),d.curSec.toFixed(1),d.propReg.toFixed(1),d.propSec.toFixed(1),
+    d.dReg.toFixed(1),d.dSec.toFixed(1)].join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([head+body],{type:"text/csv"}));
+  a.download=`ihsa_${$("sport").value}_${$("klass").value}_scenario.csv`; a.click();
+}
+$("dl").onclick=downloadCSV;
+$("dl2").onclick=downloadCSV;
+$("dataSearch").oninput=renderDataTable;
+$("tabScenario").onclick=()=>{
+  $("tabScenario").classList.add("active"); $("tabData").classList.remove("active");
+  $("viewScenario").style.display=""; $("viewData").style.display="none";
+};
+$("tabData").onclick=()=>{
+  $("tabData").classList.add("active"); $("tabScenario").classList.remove("active");
+  $("viewData").style.display=""; $("viewScenario").style.display="none";
+};
+
+$("sport").innerHTML=Object.entries(SPORTS).map(([k,v])=>`<option value="${k}"${k==="SOB"?" selected":""}>${v}</option>`).join("");
+$("sport").onchange=()=>{fillClasses();applyRecommendation();run();};
+$("klass").onchange=()=>{applyRecommendation();run();};
+$("privpaths").oninput=e=>{$("privpathsval").textContent=e.target.value;run();};
+$("regsize").oninput=e=>{$("regsizeval").textContent=e.target.value;run();};
+fillClasses(); applyRecommendation(); run();
+</script>
+</body>
+</html>

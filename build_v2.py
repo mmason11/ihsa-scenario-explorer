@@ -5,7 +5,7 @@ Build v2 dataset:
 - add FB (playoff qualifiers by class)
 - match IHSA-printed names to the master roster (coords + private status);
   geocode unmatched by city and flag them
-Outputs: schools_data_v2.json (for the explorer), match_report.txt
+Outputs: schools_data.json (consumed by build_site.py), match_report.txt
 """
 import json, re, unicodedata
 import pandas as pd
@@ -14,7 +14,7 @@ from new_sports import ASSIGNMENTS, FOOTBALL
 
 KEEP = ["SOB","SOG","VBG","BKB","BKG","CHC","DAC","BA","SBG"]
 
-df = pd.read_csv("/home/claude/ihsa/schools_master.csv")
+df = pd.read_csv("schools_master.csv")
 
 def norm(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode()
@@ -122,11 +122,17 @@ for kl, schools in FOOTBALL.items():
         if c in recs:
             recs[c]["c"]["FB"] = kl
 
-out = {"schools": list(recs.values()), "assign": assign_out}
-with open("/home/claude/ihsa/schools_data_v2.json","w") as f:
-    json.dump(out, f, separators=(",",":"), ensure_ascii=False)
+schools_out = list(recs.values())
+with open("schools_data.json","w",encoding="utf-8",newline="\n") as f:
+    f.write('{\n"schools": [\n')
+    for i, s in enumerate(schools_out):
+        line = json.dumps(s, separators=(",",":"), ensure_ascii=False)
+        f.write(line + (",\n" if i < len(schools_out)-1 else "\n"))
+    f.write('],\n"assign": ')
+    f.write(json.dumps(assign_out, indent=1, ensure_ascii=False))
+    f.write("\n}\n")
 
-with open("/home/claude/ihsa/match_report.txt","w") as f:
+with open("match_report.txt","w",encoding="utf-8") as f:
     f.write("\n".join(report))
 
 n_new = len([r for r in report if r.startswith("NEW")])

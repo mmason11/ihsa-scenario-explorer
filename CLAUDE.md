@@ -6,8 +6,15 @@ current system.
 
 ## Files
 - `index.html` — the built, self-contained explorer (deployed via Vercel from the
-  GitHub repo mmason11/ihsa-scenario-explorer). School data + actual IHSA sectional
-  assignments are embedded as JSON inside the page (`const RAW = {...}`).
+  GitHub repo mmason11/ihsa-scenario-explorer). Generated; do not hand-edit — see
+  build pipeline below.
+- `template.html` — the actual page source (markup, CSS, grouping/travel JS), with
+  a placeholder in place of the embedded data: `const RAW = __RAW_DATA_JSON__;`.
+- `schools_data.json` — the data that gets embedded: `{"schools": [...], "assign": {...}}`,
+  one school per line for readable diffs. Output of `build_v2.py`; hand-edits (e.g.
+  resolving a review-list school's status) are also fine, then rerun `build_site.py`.
+- `build_site.py` — substitutes `schools_data.json` into `template.html`'s placeholder,
+  writes `index.html`. Run this any time `template.html` or `schools_data.json` changes.
 - `prepare_data.py` — reads `source_data/IHSA_private_schools.xlsx`, normalizes
   public/private status, geocodes schools by city (offline `zipcodes` package),
   writes `schools_master.csv`.
@@ -15,11 +22,14 @@ current system.
   FLGG, LAXB, LAXG, VBB, WPB, WPG, plus 2025 football playoff qualifiers by class
   (football currently removed from the UI; kept for the planned historical simulator).
 - `build_v2.py` — matches assignment rosters to the master list, geocodes strays,
-  emits the embedded-data JSON.
+  emits `schools_data.json`.
 - `scenario_engine.py` — Python mirror of the in-page grouping/travel logic.
 - `schools_needing_review.csv` — 29 schools with unverified public/private status
   (treated as public in the tool). Should be resolved before the presentation.
 - `all_sports_summary.csv` — every sport/class at its recommended private-path count.
+
+Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
+`build_v2.py` → `schools_data.json` → `build_site.py` → `index.html`.
 
 ## Key modeling notes
 - Sports: SOB SOG VBG VBB BKB BKG BA SBG FLGG LAXB LAXG WPB WPG (cheer/dance/football removed).
@@ -32,7 +42,8 @@ current system.
   Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
 
 ## Planned next steps
-1. Rebuild index.html as template + data build script instead of one embedded file.
+1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
+   see `template.html` / `schools_data.json` / `build_site.py` above.
 2. Resolve the 29 review-list schools.
 3. Football historical simulator under the NEW playoff rules (8 classes of 32;
    1A–6A split into two 16-team brackets, 7A–8A seeded 1–32; seeding by record +

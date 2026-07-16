@@ -21,7 +21,7 @@ import math
 import pandas as pd
 import numpy as np
 
-MASTER = "/home/claude/ihsa/schools_master.csv"
+MASTER = "schools_master.csv"
 
 
 def haversine_mi(lat1, lon1, lat2, lon2):

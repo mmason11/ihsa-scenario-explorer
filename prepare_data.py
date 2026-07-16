@@ -8,7 +8,7 @@ import pandas as pd
 import re
 import zipcodes
 
-SRC = "/mnt/user-data/uploads/IHSA_private_schools.xlsx"
+SRC = "source_data/IHSA_private_schools.xlsx"
 
 SPORTS = {
     # fall
@@ -143,7 +143,7 @@ def main():
         rows.append(row)
 
     out = pd.DataFrame(rows)
-    out.to_csv("/home/claude/ihsa/schools_master.csv", index=False)
+    out.to_csv("schools_master.csv", index=False)
 
     print(f"Schools processed: {len(out)}")
     print(f"Private: {out.is_private.sum()}")
