@@ -37,8 +37,19 @@ current system.
 - `parse_pairings.py` — parses a saved bracket page into `new_sports.py`'s `ASSIGNMENTS` shape.
   Not part of the main pipeline; a standalone tool re-run when a new season's pairings post
   (usage/fetch command in its docstring).
-- `build_v2.py` — matches assignment rosters to the master list, geocodes strays,
-  emits `schools_data.json`.
+- `build_v2.py` — matches assignment rosters to the master list, geocodes strays, embeds
+  `state_finalists.json` per school as `fin` (see below), emits `schools_data.json`.
+- `state_finalists.json` — `{sport: {year: [schools that reached the state final 4]}}` for
+  the 7 enrollment-classified sports, 2022-23 through 2025-26 (the years needed for the
+  rolling-three-year success-factor window, current and next season — see template.html's
+  `SF_WINDOW_CUR`/`SF_WINDOW_NEXT`). Output of `pull_state_finalists.py`.
+- `pull_state_finalists.py` — parses saved bracket pages' "State Final Tournament" section
+  (reuses `parse_pairings.py`'s format detection) into `state_finalists.json`. Not part of
+  the main pipeline; a standalone tool re-run once a year as the window rolls forward
+  (fetch command + full instructions in its docstring) — same spirit as `parse_pairings.py`,
+  and in fact pulls from the very same bracket pages plus one prior-season archive
+  (`ihsa.org/archive/{sport}/{year}/{class}pair.htm`, confirmed to go back to at least
+  2021-22) for the two years before what's on the live site.
 - `scenario_engine.py` — Python mirror of the in-page grouping/travel logic.
 - `schools_needing_review.csv` — header-only now; all 29 previously-unverified schools were
   researched and resolved July 2026 via `REVIEW_RESOLUTIONS` in `prepare_data.py` (kept there,
@@ -70,38 +81,53 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   both the Current and Proposed maps — to another member, any IHSA school, or a custom
   venue by street address, geocoded client-side via OpenStreetMap Nominatim). Locations
   are city-level ZIP centroids — Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
+- **Success factor** (private-only, like the multiplier — a public school never gets the
+  checkbox regardless of history): a direct one-class bump (e.g. 2A→3A) for a private program
+  that reached the state final 4 twice in the rolling three seasons before the one in
+  question. Auto-computed from real results (`template.html`'s `autoSuccessFactor()`, off
+  `school.fin` / `state_finalists.json`) rather than manual — checkbox shows "(hist./hist.)"
+  when history is what's driving it, still overridable per school to explore a different
+  assumption. Validated by hand against Peoria (Notre Dame) boys soccer (2022-23 champion,
+  2023-24 runner-up → 3A this year; only 2023-24 survives into next year's window → drops to
+  2A) before wiring in. Only explains a minority of "actual class higher than enrollment alone
+  would predict" cases (11 of 177 checked) — most of the rest are almost certainly co-op
+  combined enrollment, which isn't modeled (see above); don't over-read the unexplained ones
+  as success-factor gaps. `effectiveClass()` is careful not to double-bump: the transcribed
+  base class already includes any real success-factor bump, so it's returned untouched unless
+  something *actually* changed (enrollment/multiplier/cutoff override, or an explicit
+  success-factor override that disagrees with the auto-computed value).
 - **Scenario Overrides tab** (in-browser only, `localStorage`, not part of the committed
   data). Two per-school, per-sport levers, feeding live into the Scenario Explorer and Full
-  Data tabs: override enrollment; toggle the 1.65× multiplier (private schools only —
-  applies by default to every private program unless waived, so this is a "what if waived/
-  not waived" toggle, not an "is this school private" one, and is distinct from the global
-  multiplier *value* lever on the Schools tab below); toggle the success factor (a direct
-  one-class bump, e.g. 2A→3A, for a program that reached the state final 4 twice in the
-  rolling three seasons before the one in question — public or private, independent of
-  enrollment). Both toggles are manual stand-ins where history isn't loaded yet. Also:
-  manually move a school to a different
-  sectional — both Current and Proposed, tied to whichever sport+class is currently selected
-  in the top controls (that's what determines the available target names). Current uses real
-  sectional names where we have them (every sport now — see above) or "Sectional N" as a
-  fallback if a future sport lacks real data; Proposed always uses "Public/Private path N".
-  Sectional-level only — regionals are recomputed geographically every run with no persistent
-  identity, so there's no stable "regional N" to move a school into.
+  Data tabs: override enrollment; toggle the 1.65× multiplier (applies by default to every
+  private program unless waived, so this is a "what if waived/not waived" toggle, not an "is
+  this school private" one, and is distinct from the global multiplier *value* lever on the
+  Schools tab below); toggle the success factor (see above). Also: manually move a school to
+  a different sectional — both Current and Proposed, tied to whichever sport+class is
+  currently selected in the top controls (that's what determines the available target names).
+  Current uses real sectional names where we have them (every sport now — see above) or
+  "Sectional N" as a fallback if a future sport lacks real data; Proposed always uses
+  "Public/Private path N". Sectional-level only — regionals are recomputed geographically
+  every run with no persistent identity, so there's no stable "regional N" to move a school
+  into.
 - **Schools tab**: every school with a class in the sport picked up top (all classes at once,
   not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/
-  override, via `effectiveEnrollment`), public/private, effective class, and inline multiplier/
-  success-factor checkboxes that write into the same overrides as the Scenario Overrides tab.
-  Filterable by type and class, sortable/searchable/CSV, same pattern as Full Data. Also hosts
-  two sport-wide/tool-wide levers (moved here from Scenario Overrides since they aren't
-  per-school): a classification-cutoff editor (slider + number input per class boundary,
-  reclassifying the whole field for the selected sport at once) and a multiplier-*value*
-  editor (slider + number input, default 1.65×, changes the multiplier itself — not just
-  who's waived — across every private school/sport at once, e.g. "what would 1.5× or 2× do
-  instead"). Both are official-values-per-sport (`CLASS_CUTOFFS`, current one-year cycle per
-  ihsa.org/Schools/Enrollments-Classifications, for the 7 sports this tool classifies by
-  enrollment: BA/BKB/BKG/SBG/VBG/SOB/SOG) unless overridden; doesn't account for co-op
-  programs, which classify on combined enrollment rather than any one member's own figure.
-  A class summary table (schools/public/private per class, using effective class) rounds
-  out the tab, all driven by the same sport picker in the top controls.
+  override, via `effectiveEnrollment`), public/private, effective class, expected class *next*
+  year (`nextYearClass()` — enrollment at the official 1.65× regardless of any scenario
+  overrides in effect, plus next year's rolling success-factor window; a projection, since it
+  can't know next year's actual enrollment or results), and inline multiplier/success-factor
+  checkboxes that write into the same overrides as the Scenario Overrides tab. Filterable by
+  type and class, sortable/searchable/CSV, same pattern as Full Data. Also hosts two sport-
+  wide/tool-wide levers (moved here from Scenario Overrides since they aren't per-school): a
+  classification-cutoff editor (slider + number input per class boundary, reclassifying the
+  whole field for the selected sport at once) and a multiplier-*value* editor (slider + number
+  input, default 1.65×, changes the multiplier itself — not just who's waived — across every
+  private school/sport at once, e.g. "what would 1.5× or 2× do instead"). Both are official-
+  values-per-sport (`CLASS_CUTOFFS`, current one-year cycle per ihsa.org/Schools/Enrollments-
+  Classifications, for the 7 sports this tool classifies by enrollment: BA/BKB/BKG/SBG/VBG/
+  SOB/SOG) unless overridden; doesn't account for co-op programs, which classify on combined
+  enrollment rather than any one member's own figure. A class summary table (schools/public/
+  private per class, using effective class) rounds out the tab, all driven by the same sport
+  picker in the top controls.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
@@ -110,13 +136,16 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 3. ~~Backfill real sectionals for the remaining modeled sports.~~ Done: SOG/VBG/BKB/BKG/BA/SBG
    all transcribed the same way as the SOB pilot — every sport the tool tracks now uses real
    IHSA data. See `new_sports.py`'s docstring and `parse_pairings.py`.
-4. Football historical simulator under the NEW playoff rules (8 classes of 32;
+4. ~~Automate the success-factor toggle from real Final-4/state-trophy history.~~ Done: see
+   `pull_state_finalists.py` / `state_finalists.json` above. The multiplier's waiver toggle
+   is a different, unrelated question (which programs have petitioned for a waiver) that
+   isn't public data anywhere we've found — still manual.
+5. Football historical simulator under the NEW playoff rules (8 classes of 32;
    1A–6A split into two 16-team brackets, 7A–8A seeded 1–32; seeding by record +
    at-large points; tiebreakers: most wins of defeated opponents, then head-to-head;
    round 1 hosted by higher seed, later rounds by whoever has hosted fewest, tie →
    higher seed). Compare vs. a private-separation variant using historical qualifier
-   data (needed per team/season: class, wins, at-large points, opponents/results). The
-   Scenario Overrides tab's multiplier/success-factor toggles need this same Final-4/
-   state-trophy history to compute automatically instead of being manual — worth
-   pulling once, used for both.
-5. Possible upgrades: road-mileage routing, printable brackets.
+   data (needed per team/season: class, wins, at-large points, opponents/results) —
+   `state_finalists.json`'s final-4 data is a start but this needs full season records,
+   not just who reached state finals.
+6. Possible upgrades: road-mileage routing, printable brackets.

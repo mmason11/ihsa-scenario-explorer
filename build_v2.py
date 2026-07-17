@@ -133,6 +133,21 @@ for kl, schools in FOOTBALL.items():
         if c in recs:
             recs[c]["c"]["FB"] = kl
 
+# state final-4 history (see pull_state_finalists.py), embedded per school as
+# {sport: [years appeared]} — only sports/schools with at least one appearance, kept
+# small since template.html computes the rolling-3-year success-factor window from
+# this at runtime rather than baking in a specific year's window here.
+try:
+    with open("state_finalists.json", encoding="utf-8") as f:
+        state_finalists = json.load(f)
+except FileNotFoundError:
+    state_finalists = {}
+for sport, years in state_finalists.items():
+    for year, teams in years.items():
+        for team in teams:
+            if team in recs:
+                recs[team].setdefault("fin", {}).setdefault(sport, []).append(year)
+
 schools_out = list(recs.values())
 with open("schools_data.json","w",encoding="utf-8",newline="\n") as f:
     f.write('{\n"schools": [\n')
