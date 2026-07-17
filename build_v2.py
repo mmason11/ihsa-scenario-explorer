@@ -87,16 +87,23 @@ for _, r in df.iterrows():
         if isinstance(v,str) and v.strip():
             recs[r.school]["c"][s] = v.strip()
 
-# new sports: assignments
+# new sports: assignments. Single-class sports are a flat list of
+# (sectional_name, schools); multi-class sports (e.g. SOB) are a dict of
+# class -> that same flat-list shape, since each class has its own independent
+# set of sectionals.
+def build_sectionals(secs):
+    out = []
+    for sec_name, schools in secs:
+        canon = [resolve(s) for s in schools]
+        out.append({"name": sec_name, "schools": canon})
+    return out
+
 assign_out = {}
 for sport, secs in ASSIGNMENTS.items():
-    assign_out[sport] = []
-    for sec_name, schools in secs:
-        canon = []
-        for s in schools:
-            c = resolve(s)
-            canon.append(c)
-        assign_out[sport].append({"name": sec_name, "schools": canon})
+    if isinstance(secs, dict):
+        assign_out[sport] = {kl: build_sectionals(class_secs) for kl, class_secs in secs.items()}
+    else:
+        assign_out[sport] = build_sectionals(secs)
 
 # football classes
 for kl, schools in FOOTBALL.items():
@@ -111,8 +118,11 @@ for e in extra_rows:
     recs[e["school"]] = {"n": e["school"], "la": round(e["lat"],4), "lo": round(e["lon"],4),
                          "p": 0, "st": "unmatched", "c": {}, "en": None}
 
-# stamp class values
+# stamp class values — only for single-class sports ("S" IS the class). Multi-class
+# sports keep whatever real class came from the KEEP columns above; don't clobber it.
 for sport, secs in assign_out.items():
+    if isinstance(secs, dict):
+        continue
     for sec in secs:
         for s in sec["schools"]:
             if s in recs:

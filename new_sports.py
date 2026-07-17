@@ -8,10 +8,23 @@ Sources (fetched July 2026):
 - WPB : 2024-25 Boys Water Polo pairings (archive)
 - WPG : 2024-25 Girls Water Polo pairings (archive)
 - FB  : 2025-26 Football playoff brackets, classes 1A-8A (ihsa.org/data/fb/Nbracket.htm)
+- SOB : 2025 Boys Soccer pairings, classes 1A-3A (ihsa.org/data/sob/{1,2,3}pair.htm) — pilot
+  for backfilling real sectionals in place of modeled ones for the sports still marked
+  "modeled" in the tool. Parsed from the raw HTML bracket pages (regex over <H3>/<H4>
+  section headers and "Match N: TeamA s, TeamB s" lines, not WebFetch's summarized text,
+  which drops rosters in favor of a results narrative) — every team appearing anywhere in
+  a sectional's bracket (winner or not) is a member of that sectional. 447/448 parsed team
+  names matched schools_master.csv exactly; the one miss (Elgin (Harvest-Westminster))
+  falls through to build_v2.py's normal new-school handling.
 Names appear as printed by IHSA; coop suffixes in [brackets] are stripped by the matcher.
+Single-class sports (FLGG/LAXB/LAXG/VBB/WPB/WPG) use one flat sectional list. Multi-class
+sports (SOB) use a class -> sectional-list dict instead, since each class has its own
+independent set of ~8 sectionals; build_v2.py and template.html both branch on
+isinstance(secs, dict) to tell the two shapes apart.
 """
 
-# sport -> list of (sectional_name, [schools])
+# sport -> list of (sectional_name, [schools]), OR for multi-class sports,
+# sport -> {class: list of (sectional_name, [schools])}
 ASSIGNMENTS = {
 "FLGG": [
  ("Buffalo Grove Sectional", [
@@ -286,6 +299,196 @@ ASSIGNMENTS = {
   "Tinley Park (Andrew)","Frankfort (Lincoln-Way East)","Flossmoor (Homewood-F.)",
   "New Lenox (Lincoln-Way West)","Bradley (B.-Bourbonnais)"]),
 ],
+"SOB": {
+ "1A": [
+  ("Effingham (H.S.) Sectional", [
+   "Effingham (H.S.)", "Carlinville", "Rochester", "Teutopolis", "Altamont [Coop]", "Mt. Carmel", 
+   "Pana [Coop]", "Vandalia", "Newton", "Raymond (Lincolnwood) [Coop]", "Piasa (Southwestern)", 
+   "Salem", "Olney (Richland County)", "Robinson", "Effingham (St. Anthony)", "Staunton [Coop]", 
+   "Greenville", "Springfield (Lutheran) [Coop]", "Virden (North Mac) [Coop]", "Litchfield", 
+   "Hillsboro", 
+  ]),
+  ("Glen Carbon (Father McGivney) Sectional", [
+   "Columbia", "Alton (Marquette)", "Glen Carbon (Father McGivney)", "Metropolis (Massac County)", 
+   "Roxana", "Carlyle", "Lebanon", "Breese (Mater Dei)", "Pinckneyville", "Harrisburg [Coop]", 
+   "Freeburg", "Anna (A.-Jonesboro) [Coop]", "Trenton (Wesclin)", "Wood River (East Alton-W.R.)", 
+   "Maryville (M. Christian)", "Breese (Central)", "Vienna [Coop]", "Valmeyer", "Murphysboro", 
+   "Waterloo (Gibault Catholic)", 
+  ]),
+  ("Johnsburg Sectional", [
+   "Richmond (R.-Burton)", "Chicago (F.W. Parker)", "Chicago (C. Academy)", 
+   "Northfield (Christian Heritage Academy)", "Skokie (Yeshiva)", "Morton Grove (MCC Academy)", 
+   "Chicago (C. Math and Science Charter)", "Skokie (Ida Crown)", "Chicago (Holy Trinity)", 
+   "Chicago (Marine Leadership Academy)", "Chicago (Noble Street Charter)", 
+   "Chicago (ASPIRA/Business and Finance)", "Chicago (Alcott) [Coop]", "Chicago (Clemente)", 
+   "Chicago (Rickover Naval Academy)", "Johnsburg", "Winnetka (North Shore Country Day)", 
+   "Chicago (Lycée Français de Chicago)", "Deerfield (Rochelle Zell)", 
+  ]),
+  ("Westmont Sectional", [
+   "Elmhurst (IC Catholic)", "Westmont", "Chicago (C. Hope Academy)", "Lisle (Sr.)", 
+   "Chicago (Bogan)", "Bridgeview (Universal)", "Chicago (Richards)", 
+   "Chicago (South Shore International College Prep)", "Chicago (Catalyst/Maria)", 
+   "Chicago (Air Force Academy)", "Chicago (Horizon/Southwest Chicago)", 
+   "Chicago (Horizon/McKinley)", "Lombard (Montini)", "Chicago (Noble/Rauner)", 
+   "Chicago (Phoenix Military Academy)", "Villa Park (Islamic Foundation)", 
+   "Chicago (Instituto Health Science Charter)", "Chicago (Daystar Academy)", 
+   "Chicago (Noble/Golder)", "Lombard (College Prep)", 
+  ]),
+  ("Coal City Sectional", [
+   "Coal City", "Herscher", "Manteno", "Palos Heights (Chicago Christian)", "Kankakee (McNamara)", 
+   "Gilman (Iroquois West)", "St. Anne", "Clifton (Central)", "Hoopeston (H. Area) [Coop]", 
+   "Watseka [Coop]", "Braidwood (Reed-Custer) [Coop]", "Momence", 
+   "Chicago (Carver Military Academy)", "Crete (Illinois Lutheran)", "Joliet (Catholic Academy)", 
+   "Beecher", "Yorkville (Y. Christian)", "South Holland (Unity Christian Academy)", "Peotone", 
+   "Grant Park", 
+  ]),
+  ("Williamsville Sectional", [
+   "Williamsville", "Fithian (Oakwood) [Coop]", "St. Joseph (S.J.-Ogden)", "Athens [Coop]", 
+   "Monticello", "Argenta (A.-Oreana)", "Warrensburg (W.-Latham) [Coop]", "Mt. Pulaski", 
+   "Pleasant Plains", "Decatur (St. Teresa)", "Arthur (A.-Lovington-Atwood-Hammond)", 
+   "Macon (Meridian) [Coop]", "Riverton [Coop]", "Tolono (Unity)", 
+   "Farmer City (Blue Ridge) [Coop]", "Urbana (University)", "Champaign (St. Thomas More)", 
+   "Georgetown (G.-Ridge Farm)", "Danville (Schlarman)", "Fisher [Coop]", 
+   "Bismarck (B.-Henning-Rossville-Alvin)", 
+  ]),
+  ("Chillicothe (Illinois Valley Central) Sectional", [
+   "Rock Island (Alleman)", "Roanoke (R.-Benson) [Coop]", "Quincy (Notre Dame)", 
+   "Peoria (P. Christian)", "Canton", "Macomb", "Glasford (Illini Bluffs) [Coop]", 
+   "Abingdon (A.-Avon)", "Monmouth (M.-Roseville)", "Port Byron (Riverdale)", "Beardstown (H.S.)", 
+   "Kewanee (H.S.)", "Princeton", "Stanford (Olympia)", 
+   "Bloomington (Cornerstone Christian Academy)", "Chillicothe (Illinois Valley Central)", 
+   "Peru (St. Bede)", "Normal (Calvary Christian Academy)", "Bloomington (Central Catholic)", 
+   "Peoria (Manual)", 
+  ]),
+  ("Shabbona (Indian Creek) Sectional", [
+   "Elgin (Harvest-Westminster)", "Byron", "Mendota", "Genoa (G.-Kingston)", "Serena", "Earlville", 
+   "Somonauk [Coop]", "Hinckley (H.-Big Rock)", "Rockford (R. Christian)", "Woodstock (Marian)", 
+   "Pecatonica [Coop]", "Rockford (Lutheran)", "Winnebago", "Marengo", "Stillman Valley", "Oregon", 
+   "Poplar Grove (North Boone)", "Elgin (St. Edward)", "Sandwich", "Schaumburg (S. Christian)", 
+   "Shabbona (Indian Creek)", 
+  ]),
+ ],
+ "2A": [
+  ("Mascoutah Sectional", [
+   "Chatham (Glenwood)", "Waterloo (H.S.)", "Belleville (Althoff Catholic)", "Troy (Triad)", 
+   "Jerseyville (Jersey)", "Taylorville", "Springfield (H.S.)", "Jacksonville (H.S.)", 
+   "Mt. Vernon (H.S.)", "Mascoutah", "Carterville [Coop]", "Centralia (H.S.)", "Granite City", 
+   "Carbondale (H.S.)", "Marion (H.S.)", "Highland", "Bethalto (Civic Memorial)", 
+   "Springfield (Sacred Heart-Griffin)", 
+  ]),
+  ("Washington Sectional", [
+   "Washington", "Urbana (H.S.)", "Normal (Community West)", "Mahomet (M.-Seymour)", "Lincoln", 
+   "Metamora", "Normal (University)", "Rantoul [Coop]", "Charleston", "Mt. Zion", "Mattoon", 
+   "Pekin", "Morton", "Bloomington (H.S.)", "Danville (H.S.)", "Champaign (Centennial)", 
+   "Champaign (Central)", 
+  ]),
+  ("Darien (Hinsdale South) Sectional", [
+   "Midlothian (Bremen)", "Lemont (H.S.)", "Darien (Hinsdale South)", "Chicago (Kennedy)", 
+   "Chicago Heights (Marian)", "Chicago (University)", "Evergreen Park", "Chicago (Morgan Park)", 
+   "Chicago (Brooks)", "New Lenox (Providence Catholic)", "Oak Lawn (Richards)", 
+   "Chicago (Goode STEM Academy)", "Chicago (Agricultural Science)", "Oak Forest", 
+   "Chicago (St. Rita)", "Chicago (Hubbard)", "Tinley Park (H.S.)", "Chicago (Washington)", 
+   "Crete (C.-Monee)", 
+  ]),
+  ("Galesburg (H.S.) Sectional", [
+   "Dunlap", "Kankakee (Sr.)", "Rock Island (H.S.)", "Aurora (Marmion Academy)", "Geneseo", 
+   "Peoria (H.S.)", "Peoria (Richwoods)", "Galesburg (H.S.)", "Streator (Twp.) [Coop]", 
+   "Aurora (Illinois Math and Science Academy)", "LaSalle (L.-Peru)", "Ottawa (Twp.)", 
+   "Orion [Coop]", "East Peoria [Coop]", "Bartonville (Limestone)", "Sterling (H.S.)", "Plano", 
+   "Morris [Coop]", "Aurora (Central Catholic)", "Dixon (H.S.)", 
+  ]),
+  ("Chicago (De La Salle) A Sectional", [
+   "Chicago (De La Salle)", "Chicago (Solorio Academy)", "Elmhurst (Timothy Christian)", 
+   "Chicago (Cristo Rey Jesuit)", "LaGrange Park (Nazareth Academy)", 
+   "Chicago (Intrinsic Charter-Downtown Campus)", "Glen Ellyn (Glenbard South)", 
+   "Chicago (Juarez)", "Riverside (R.-Brookfield)", "Chicago (Noble/Bulls)", 
+   "Chicago (Back of the Yards)", "Chicago (Little Village)", "Chicago (Noble/Muchin)", 
+   "Wheaton (St. Francis)", "Chicago (Noble/Mansueto)", "Chicago (Acero/Garcia)", 
+   "Chicago (Noble/UIC)", "Chicago (Acero/Soto)", "Chicago (Kelly)", 
+  ]),
+  ("Chicago (De La Salle) B Sectional", [
+   "Chicago (St. Patrick)", "Norridge (Ridgewood)", "Oak Park (Fenwick)", "Bensenville (Fenton)", 
+   "Chicago (North Grand)", "Chicago (Disney II)", "Elmwood Park", "Chicago (Lake View)", 
+   "Chicago (Westinghouse College Prep)", "Chicago (Schurz)", "Chicago (Northside)", 
+   "Chicago (Noble/Pritzker)", "Chicago (Ogden International)", "Chicago (Roosevelt)", 
+   "Chicago (Von Steuben)", "Chicago (Amundsen)", "Chicago (Intrinsic Charter)", 
+   "Chicago (Payton)", "Chicago (Latin)", 
+  ]),
+  ("Geneva Sectional", [
+   "Streamwood", "Rockford (Boylan Catholic)", "West Chicago (Wheaton Academy)", "Harvard", 
+   "Rockford (East)", "Maple Park (Kaneland)", "Burlington (Central)", "Sycamore (H.S.)", 
+   "Belvidere (H.S.)", "Rochelle", "Freeport (H.S.)", "Belvidere (North)", "Cary (C.-Grove)", 
+   "Woodstock (North)", "Geneva", "Crystal Lake (Central)", "Woodstock (H.S.)", "Batavia", 
+   "Crystal Lake (South)", "Crystal Lake (Prairie Ridge)", 
+  ]),
+  ("Grayslake (Central) Sectional", [
+   "Grayslake (Central)", "Highland Park", "Grayslake (North)", "Mundelein (Carmel)", "Wheeling", 
+   "Chicago (Sullivan)", "Waukegan (Cristo Rey St. Martin)", "Niles (Northridge Prep)", 
+   "Chicago (Senn)", "North Chicago", "Lake Forest (H.S.)", "Lake Villa (Lakes)", 
+   "Chicago (Mather)", "Antioch", "Arlington Heights (St. Viator)", "Deerfield (H.S.)", 
+   "Chicago (CICS/Northtown)", "Wauconda", "Vernon Hills", 
+  ]),
+ ],
+ "3A": [
+  ("Arlington Heights (Hersey) Sectional", [
+   "Northbrook (Glenbrook North)", "Arlington Heights (Hersey)", "Lincolnshire (Stevenson)", 
+   "Barrington", "Zion (Z.-Benton)", "Fox Lake (Grant)", "Lake Zurich", "Libertyville", 
+   "Glenview (Glenbrook South)", "Round Lake", "Mundelein (H.S.)", "Waukegan (H.S.)", 
+   "Gurnee (Warren)", "Palatine (H.S.)", "Buffalo Grove", "Palatine (Fremd)", 
+   "Mt. Prospect (Prospect)", 
+  ]),
+  ("South Elgin Sectional", [
+   "St. Charles (North)", "Carpentersville (Dundee-Crown)", "South Elgin", "Bartlett", 
+   "Rockford (Guilford)", "Machesney Park (Harlem)", "Hampshire", "Rockton (Hononegah)", 
+   "St. Charles (East)", "Rockford (Jefferson)", "Algonquin (Jacobs)", "Rockford (Auburn)", 
+   "Huntley", "McHenry", "DeKalb", "Elgin (Larkin)", "Elgin (H.S.)", 
+  ]),
+  ("Hinsdale (Central) Sectional", [
+   "Berwyn-Cicero (Morton)", "Downers Grove (South)", "Burbank (St. Laurence)", "LaGrange (Lyons)", 
+   "Chicago (Hancock)", "Chicago (Lindblom)", "Hinsdale (Central)", "Chicago (Whitney Young)", 
+   "Summit (Argo)", "Burbank (Reavis)", "Chicago (Jones)", "Chicago (Curie)", 
+   "Downers Grove (North)", "Oak Lawn (Community)", "Chicago (St. Ignatius College Prep)", 
+   "Chicago (Kenwood)", "Chicago (Mt. Carmel)", 
+  ]),
+  ("Joliet (West) Sectional", [
+   "New Lenox (Lincoln-Way West)", "Palos Hills (Stagg)", "New Lenox (Lincoln-Way Central)", 
+   "Frankfort (Lincoln-Way East)", "Orland Park (Sandburg)", 
+   "Calumet City (Thornton Fractional North) [Coop]", "Joliet (Central)", "Chicago (Brother Rice)", 
+   "Blue Island (Eisenhower)", "Chicago Heights (Bloom Twp.)", "Palos Heights (Shepard)", 
+   "Richton Park (Rich Township)", "Flossmoor (Homewood-F.)", "Harvey (Thornton) [Coop]", 
+   "Chicago (Marist)", "Joliet (West)", "Tinley Park (Andrew)", 
+  ]),
+  ("Chicago (Taft) Sectional", [
+   "Oak Park (O.P.-River Forest)", "Skokie (Niles West)", "Chicago (Lane)", 
+   "Park Ridge (Maine South)", "Chicago (DePaul College Prep)", "Winnetka (New Trier)", 
+   "Niles (Notre Dame)", "Maywood (Proviso East)", "Chicago (Prosser)", "Chicago (Taft)", 
+   "Des Plaines (Maine West)", "Evanston (Twp.)", "Skokie (Niles North)", "Chicago (Lincoln Park)", 
+   "Chicago (Noble/ITW Speer)", "Wilmette (Loyola Academy)", "Park Ridge (Maine East)", 
+  ]),
+  ("Schaumburg (H.S.) Sectional", [
+   "West Chicago (H.S.)", "Franklin Park-Northlake (Leyden)", "Schaumburg (H.S.)", 
+   "Hoffman Estates (H.S.)", "Glen Ellyn (Glenbard West)", "Carol Stream (Glenbard North)", 
+   "Wheaton (W. Warrenville South)", "Wheaton (North)", "Roselle (Lake Park)", 
+   "Hoffman Estates (Conant)", "Hillside (Proviso West)", "Elk Grove Village (E.G.)", 
+   "Addison (A. Trail)", "Rolling Meadows", "Villa Park (Willowbrook)", "Lombard (Glenbard East)", 
+   "Elmhurst (York)", 
+  ]),
+  ("Naperville (North) Sectional", [
+   "Naperville (North)", "Lockport (Twp.)", "Naperville (Central)", "Aurora (West Aurora)", 
+   "Plainfield (East)", "Oswego (H.S.)", "Plainfield (North)", "Romeoville (H.S.)", 
+   "Aurora (East)", "Aurora (Waubonsie Valley)", "Bolingbrook", "Naperville (Neuqua Valley)", 
+   "Lisle (Benet Academy)", "Aurora (Metea Valley)", "Plainfield (Central)", "Yorkville (H.S.)", 
+   "Oswego (East)", 
+  ]),
+  ("Peoria (Notre Dame) Sectional", [
+   "Collinsville", "O'Fallon (H.S.)", "Normal (Community)", "Minooka", 
+   "Springfield (Southeast) [Coop]", "Belleville (West)", "Quincy (Sr.)", "Edwardsville (H.S.)", 
+   "Belleville (East)", "Alton (Sr.)", "Plainfield (South)", "Bradley (B.-Bourbonnais)", 
+   "East Moline (United)", "Decatur (MacArthur) [Coop]", "Peoria (Notre Dame)", "Moline (H.S.)", 
+  ]),
+ ],
+},
+
 }
 
 # Football: class -> 32 playoff qualifiers (2025-26). No sectionals; seeded brackets.

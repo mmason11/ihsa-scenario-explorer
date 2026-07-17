@@ -248,6 +248,16 @@
 const RAW = __RAW_DATA_JSON__;
 const DATA = RAW.schools;
 const ASSIGN = RAW.assign;
+// ASSIGN[sport] is a flat sectional list for single-class sports (FLGG/LAXB/LAXG/
+// VBB/WPB/WPG — one shared list, no class dimension), or a {class: sectional-list}
+// dict for multi-class sports with real per-class assignments (e.g. SOB). This
+// normalizes access to "the sectional list for this sport at this class", or null
+// if there's no real-assignment data for that combination.
+function realGroups(sport,klass){
+  const a=ASSIGN[sport];
+  if(!a) return null;
+  return Array.isArray(a)?a:(a[klass]||null);
+}
 const SPORTS = {SOB:"Soccer (B)",SOG:"Soccer (G)",VBG:"Volleyball (G)",VBB:"Volleyball (B)",
 BKB:"Basketball (B)",BKG:"Basketball (G)",BA:"Baseball",SBG:"Softball (G)",
 FLGG:"Flag Football (G)",LAXB:"Lacrosse (B)",LAXG:"Lacrosse (G)",
@@ -346,8 +356,9 @@ function effectiveClass(school,sport){
   return cls;
 }
 function ovrCurrentSectional(school,sport){
-  if(!ASSIGN[sport]) return null;
-  const sec=ASSIGN[sport].find(s=>s.schools.includes(school.n));
+  const groups=realGroups(sport,school.c[sport]);
+  if(!groups) return null;
+  const sec=groups.find(s=>s.schools.includes(school.n));
   return sec?sec.name:null;
 }
 
@@ -645,7 +656,16 @@ function recommendPaths(field,priv){
 // with the private-paths slider, so a stale override could otherwise just delete
 // a school from the map instead of moving it.
 function applySectionalOverrides(groups,sp,which){
+  // Only schools already somewhere in this exact class/field's natural rosters are
+  // eligible to be moved — captured before any mutation. Without this, a school
+  // overridden for a DIFFERENT class of the same sport (or excluded from the
+  // Proposed field entirely) could get pulled in via a coincidental sectional-name
+  // match, or the Current-side guard would otherwise need to special-case that
+  // Proposed membership depends on effectiveClass() while Current depends on the
+  // school's real class — this one check is correct for both.
+  const validNames=new Set(groups.flatMap(g=>g.members.map(m=>m.n)));
   DATA.forEach(d=>{
+    if(!validNames.has(d.n)) return;
     const target=overrides[d.n]&&overrides[d.n].sectional&&overrides[d.n].sectional[sp]&&overrides[d.n].sectional[sp][which];
     if(!target) return;
     const tg=groups.find(g=>g.name===target);
@@ -672,7 +692,8 @@ function run(){
   const fresh = sig!==lastSig;
   if(fresh){ hostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
 
-  const hasReal=!!ASSIGN[sp];
+  const realForField=realGroups(sp,kl);
+  const hasReal=!!realForField;
   $("curBadge").className="srcbadge "+(hasReal?"real":"sim");
   $("curBadge").textContent=hasReal?"actual IHSA":"modeled";
   $("cursub").textContent=hasReal
@@ -681,7 +702,7 @@ function run(){
 
   let curGroups;
   if(hasReal){
-    curGroups=ASSIGN[sp].map(sec=>({name:sec.name,
+    curGroups=realForField.map(sec=>({name:sec.name,
       host:sec.name.replace(/\s+Sectional\s*$/,""),
       members:sec.schools.map(n=>byName[n]).filter(Boolean)}));
     applySectionalOverrides(curGroups,sp,"Current");
@@ -902,10 +923,11 @@ function renderOvrDetail(name){
     realSports.forEach(sp=>{
       const curSec=ovrCurrentSectional(school,sp);
       const overrideSec=o.sectional&&o.sectional[sp]&&o.sectional[sp].Current;
+      const groups=realGroups(sp,school.c[sp]);
       h+=`<div class="hostpick">
         <label>${SPORTS[sp]||sp}</label>
         <select id="ovrSecCur_${sp}">
-          ${ASSIGN[sp].map(g=>`<option value="${g.name.replace(/"/g,"&quot;")}"${(overrideSec||curSec)===g.name?" selected":""}>${g.name}</option>`).join("")}
+          ${groups.map(g=>`<option value="${g.name.replace(/"/g,"&quot;")}"${(overrideSec||curSec)===g.name?" selected":""}>${g.name}</option>`).join("")}
         </select>
         <span class="fieldnote" style="margin-left:auto;">actual: ${curSec}${overrideSec?' <span class="hostnote">(moved)</span>':""}</span>
       </div>`;
