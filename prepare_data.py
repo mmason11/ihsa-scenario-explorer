@@ -92,6 +92,21 @@ def geocode_city(city: str):
     return None, None
 
 
+def parse_enrollment(v):
+    """
+    'Enrollment' cells hold the base ISBE-derived figure, sometimes with the
+    1.65 success-multiplier value in parens, e.g. '48.00 (79.20)' -> 48.0.
+    Plain numbers (no multiplier applied) appear as-is, e.g. 236 -> 236.0.
+    """
+    if pd.isna(v):
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = str(v).strip()
+    m = re.match(r"^([\d.]+)", s)
+    return float(m.group(1)) if m else None
+
+
 def normalize_status(v):
     """
     'private'/'yes' -> private (non-boundaried private school)
@@ -174,6 +189,8 @@ def main():
         if city not in cache:
             cache[city] = geocode_city(city)
         lat, lon = cache[city]
+        enrollments = [parse_enrollment(r.get(c)) for c in ("Enrollment", "Enrollment.1", "Enrollment.2")]
+        enrollments = [e for e in enrollments if e is not None]
         row = {
             "school": school,
             "city": city,
@@ -182,6 +199,7 @@ def main():
             "needs_review": needs_review,
             "board_division": r["Board Division"],
             "district": r["District"],
+            "enrollment": max(enrollments) if enrollments else None,
             "lat": lat,
             "lon": lon,
         }

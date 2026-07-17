@@ -125,6 +125,7 @@
   <div class="tabs">
     <button class="tab active" id="tabScenario">Scenario Explorer</button>
     <button class="tab" id="tabData">Full Data</button>
+    <button class="tab" id="tabOverrides">Scenario Overrides</button>
   </div>
 
   <div id="viewScenario">
@@ -184,6 +185,43 @@
     <table class="stats" id="dataTable"></table>
   </div><!-- /viewData -->
 
+  <div id="viewOverrides" style="display:none">
+    <h3>Scenario overrides</h3>
+    <div class="tblnote">Adjust a school's enrollment, apply the 1.65&times; success multiplier, or move it to a
+      different sectional — the Scenario Explorer and Full Data tabs reflect it immediately. Reclassification
+      uses IHSA's published enrollment cutoffs (current one-year cycle, ihsa.org/Schools/Enrollments-Classifications)
+      for baseball, softball, boys/girls basketball, girls volleyball, and boys/girls soccer — the only sports
+      this tool classifies by enrollment. It doesn't account for co-op programs, which classify on their combined
+      enrollment rather than any one member's own figure. Overrides live only in this browser (not saved/shared)
+      and apply across every sport/class combination above.</div>
+
+    <h3 style="margin-top:26px;">Classification cutoffs</h3>
+    <div class="tblnote">Edit a class's max-enrollment boundary to reclassify every school in that sport at
+      once — e.g. raise 1A's ceiling and see who moves into it. The top class is always "and over" and isn't
+      editable. This changes the whole field, on top of (and combined with) any per-school enrollment override below.</div>
+    <div class="hostpick" style="margin-bottom:18px;">
+      <label>Sport</label>
+      <select id="cutoffSportPick"></select>
+      <span id="cutoffResetWrap"></span>
+    </div>
+    <div id="cutoffInputs"></div>
+
+    <h3 style="margin-top:26px;">Per-school overrides</h3>
+    <div class="hostpick" style="margin-bottom:18px;">
+      <label>School</label>
+      <input list="allschoolsOvr" id="ovrPick" placeholder="Type a school name…" style="min-width:280px;">
+      <datalist id="allschoolsOvr"></datalist>
+      <button id="ovrGo">Load</button>
+    </div>
+
+    <div id="ovrDetail"><span class="hint">Pick a school above to view or edit its enrollment, classification, and sectional assignment.</span></div>
+
+    <h3>Active overrides</h3>
+    <div class="tblnote" id="ovrListNote"></div>
+    <table class="stats" id="ovrListTable"></table>
+    <div class="btnrow"><button id="ovrClearAll">Clear all overrides</button></div>
+  </div><!-- /viewOverrides -->
+
   <footer>
     Method: where actual IHSA assignments are unavailable, schools are grouped by recursive geographic
     bisection (balanced, contiguous splits), mirroring how sectional and regional boundaries are drawn;
@@ -194,7 +232,8 @@
     8 &times; private share of the field, rounded, kept between 1 and 4. Sources: 2025 girls flag
     football pairings; 2025&ndash;26 boys/girls lacrosse and boys volleyball assignments (Elgin and
     O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools are
-    treated as public. Verify status flags marked for review before publication.
+    treated as public. Verify status flags marked for review before publication. Enrollment figures (Scenario
+    Overrides tab) are each school's base ISBE-derived enrollment prior to any 1.65&times; success multiplier.
   </footer>
 </div>
 
@@ -212,6 +251,68 @@ const IL = [[42.508,-90.64],[42.494,-87.80],[41.76,-87.52],[39.0,-87.53],[38.5,-
 [41.0,-91.05],[41.42,-91.05],[41.58,-90.4],[41.78,-90.25],[42.0,-90.16],[42.2,-90.42],[42.508,-90.64]];
 const HUES = ["#46608c","#7a5c9e","#2e7d6f","#b5651d","#5b7a3a","#8c4670","#3a6f8c","#8a7332"];
 const byName = {}; DATA.forEach(d=>byName[d.n]=d);
+
+// ---- scenario overrides (enrollment/multiplier/sectional) — local to this browser only
+const OVR_KEY="ihsa_scenario_overrides_v1";
+let overrides={};
+try{ overrides=JSON.parse(localStorage.getItem(OVR_KEY)||"{}"); }catch(e){ overrides={}; }
+function saveOverrides(){ try{ localStorage.setItem(OVR_KEY,JSON.stringify(overrides)); }catch(e){} }
+function pruneOvr(name){
+  const o=overrides[name]; if(!o) return;
+  if(o.sectional && !Object.keys(o.sectional).length) delete o.sectional;
+  if(o.en==null && !o.mult && !o.sectional) delete overrides[name];
+}
+function effectiveEnrollment(school){
+  const o=overrides[school.n];
+  const base=(o&&o.en!=null)?o.en:school.en;
+  if(base==null) return null;
+  return (o&&o.mult)?base*1.65:base;
+}
+// Official IHSA classification cutoffs (current one-year cycle, ihsa.org/Schools/
+// Enrollments-Classifications): each entry is [classLabel, maxEnrollmentInclusive],
+// ascending; enrollment is post-1.65x-multiplier where the multiplier applies.
+// Only sports the tool actually classifies by enrollment are listed — the "S"
+// (single-class, real-assignment) sports below don't need cutoffs, and CHC/DAC
+// use a different class-label scheme in the source data than IHSA's current S/M/L
+// page, so are left out rather than guessed.
+const CLASS_CUTOFFS={
+  BA: [["1A",300],["2A",700],["3A",1600],["4A",Infinity]],
+  BKB:[["1A",300],["2A",700],["3A",1600],["4A",Infinity]],
+  BKG:[["1A",300],["2A",700],["3A",1600],["4A",Infinity]],
+  SBG:[["1A",300],["2A",700],["3A",1600],["4A",Infinity]],
+  VBG:[["1A",300],["2A",700],["3A",1600],["4A",Infinity]],
+  SOB:[["1A",700],["2A",1700],["3A",Infinity]],
+  SOG:[["1A",800],["2A",1800],["3A",Infinity]],
+};
+const CUTOFF_KEY="ihsa_cutoff_overrides_v1";
+let cutoffOverrides={};
+try{
+  cutoffOverrides=JSON.parse(localStorage.getItem(CUTOFF_KEY)||"{}");
+  // top class's cap is always "and over" (Infinity) — JSON round-trips Infinity as null
+  Object.values(cutoffOverrides).forEach(rows=>{ if(rows.length) rows[rows.length-1][1]=Infinity; });
+}catch(e){ cutoffOverrides={}; }
+function saveCutoffOverrides(){ try{ localStorage.setItem(CUTOFF_KEY,JSON.stringify(cutoffOverrides)); }catch(e){} }
+function effectiveCutoffs(sport){ return cutoffOverrides[sport]||CLASS_CUTOFFS[sport]; }
+function predictClass(sport,en,fallback){
+  if(en==null) return fallback;
+  const table=effectiveCutoffs(sport);
+  if(!table) return fallback;
+  for(const [k,max] of table) if(en<=max) return k;
+  return table[table.length-1][0];
+}
+function effectiveClass(school,sport){
+  const base=school.c[sport];
+  if(!base||base==="S"||!CLASS_CUTOFFS[sport]) return base;
+  const o=overrides[school.n];
+  const hasEnOverride=o&&(o.en!=null||o.mult);
+  if(!hasEnOverride&&!cutoffOverrides[sport]) return base;
+  return predictClass(sport,effectiveEnrollment(school),base);
+}
+function ovrCurrentSectional(school,sport){
+  if(!ASSIGN[sport]) return null;
+  const sec=ASSIGN[sport].find(s=>s.schools.includes(school.n));
+  return sec?sec.name:null;
+}
 
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,p1=a*r,p2=c*r,dp=(c-a)*r,dl=(d-b)*r;
   const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
@@ -475,7 +576,7 @@ function recommendPaths(field,priv){
 function run(){
   const sp=$("sport").value, kl=$("klass").value;
   const P=+$("privpaths").value, R=+$("regsize").value;
-  const field=DATA.filter(d=>d.c[sp]===kl);
+  const field=DATA.filter(d=>effectiveClass(d,sp)===kl);
   const priv=field.filter(d=>d.p), pub=field.filter(d=>!d.p);
   $("fieldnote").innerHTML=`<strong>${field.length}</strong> teams in field<br>${pub.length} public &middot; ${priv.length} private`;
   $("propsub").textContent=`${8-P} public sectionals + ${P} private-only path${P>1?"s":""}`;
@@ -501,6 +602,13 @@ function run(){
     curGroups=ASSIGN[sp].map(sec=>({name:sec.name,
       host:sec.name.replace(/\s+Sectional\s*$/,""),
       members:sec.schools.map(n=>byName[n]).filter(Boolean)}));
+    DATA.forEach(d=>{
+      const target=overrides[d.n]&&overrides[d.n].sectional&&overrides[d.n].sectional[sp];
+      if(!target) return;
+      curGroups.forEach(g=>{ const idx=g.members.indexOf(d); if(idx>=0) g.members.splice(idx,1); });
+      const tg=curGroups.find(g=>g.name===target);
+      if(tg&&!tg.members.includes(d)) tg.members.push(d);
+    });
   }else{
     curGroups=simGroups(field,8,"Sectional");
   }
@@ -574,7 +682,7 @@ function run(){
 
 function applyRecommendation(){
   const sp=$("sport").value, kl=$("klass").value;
-  const field=DATA.filter(d=>d.c[sp]===kl);
+  const field=DATA.filter(d=>effectiveClass(d,sp)===kl);
   const rec=recommendPaths(field,field.filter(d=>d.p));
   $("privpaths").value=rec;
   $("privpathsval").textContent=rec;
@@ -594,6 +702,167 @@ function fillClasses(){
     setSel(w, mapState[w].sec, e.target.value===""?null:+e.target.value);
   };
 });
+
+// ---- scenario overrides tab
+function renderCutoffEditor(){
+  const sports=Object.keys(CLASS_CUTOFFS);
+  const sel=$("cutoffSportPick");
+  if(!sel.options.length){
+    sel.innerHTML=sports.map(sp=>`<option value="${sp}">${SPORTS[sp]||sp}</option>`).join("");
+  }
+  const sp=sel.value||sports[0];
+  const table=effectiveCutoffs(sp), official=CLASS_CUTOFFS[sp];
+  const overridden=!!cutoffOverrides[sp];
+  $("cutoffResetWrap").innerHTML=overridden?'<button id="cutoffReset">Reset to official</button>':"";
+  let h=`<table><tr><th>Class</th><th>Max enrollment</th></tr>`;
+  table.forEach(([k,max],i)=>{
+    const isTop=i===table.length-1;
+    h+=`<tr><td>${k}</td><td>${isTop?"and over":
+      `<input type="number" min="1" step="1" class="cutoffInput" data-idx="${i}" value="${max}" style="width:90px;">`}</td></tr>`;
+  });
+  h+="</table>";
+  $("cutoffInputs").innerHTML=h;
+  $("cutoffInputs").querySelectorAll(".cutoffInput").forEach(inp=>{
+    inp.onchange=()=>{
+      const v=parseFloat(inp.value);
+      if(isNaN(v)||v<=0) return;
+      const base=(cutoffOverrides[sp]||official).map(row=>[...row]);
+      base[+inp.dataset.idx][1]=v;
+      cutoffOverrides[sp]=base;
+      saveCutoffOverrides(); run(); renderCutoffEditor(); renderOvrList();
+      if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+    };
+  });
+  const resetBtn=$("cutoffReset");
+  if(resetBtn) resetBtn.onclick=()=>{
+    delete cutoffOverrides[sp];
+    saveCutoffOverrides(); run(); renderCutoffEditor(); renderOvrList();
+    if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+  };
+}
+$("cutoffSportPick").onchange=renderCutoffEditor;
+
+function renderOvrList(){
+  const names=Object.keys(overrides).filter(n=>overrides[n]&&Object.keys(overrides[n]).length);
+  const cutoffSports=Object.keys(cutoffOverrides);
+  $("ovrListNote").textContent=(names.length||cutoffSports.length)
+    ?`${names.length} school override(s) · ${cutoffSports.length} sport cutoff override(s)${cutoffSports.length?` (${cutoffSports.map(sp=>SPORTS[sp]||sp).join(", ")})`:""}.`
+    :"No active overrides.";
+  if(!names.length){ $("ovrListTable").innerHTML=""; return; }
+  let h=`<tr><th style="text-align:left">School</th><th style="text-align:left">Enrollment</th><th style="text-align:left">Sectional moves</th><th></th></tr>`;
+  names.forEach(n=>{
+    const o=overrides[n], s=byName[n];
+    const enPart=(o.en!=null||o.mult)?`${o.en!=null?o.en:(s?s.en:"?")}${o.mult?" ×1.65":""}`:"—";
+    const secPart=(o.sectional&&Object.keys(o.sectional).length)
+      ?Object.entries(o.sectional).map(([sp,g])=>`${SPORTS[sp]||sp} → ${g}`).join("; "):"—";
+    h+=`<tr><td style="text-align:left">${n}</td><td style="text-align:left">${enPart}</td>
+      <td style="text-align:left">${secPart}</td>
+      <td><button data-name="${n.replace(/"/g,"&quot;")}" class="ovrRemove">Remove</button></td></tr>`;
+  });
+  $("ovrListTable").innerHTML=h;
+  $("ovrListTable").querySelectorAll(".ovrRemove").forEach(btn=>{
+    btn.onclick=()=>{
+      const nm=btn.dataset.name;
+      delete overrides[nm]; saveOverrides(); run(); renderOvrList();
+      if($("ovrPick").value===nm) renderOvrDetail(nm);
+    };
+  });
+}
+
+function renderOvrDetail(name){
+  const school=byName[name];
+  const el=$("ovrDetail");
+  if(!school){ el.innerHTML='<span class="hint">School not found — pick a name from the list.</span>'; return; }
+  const o=overrides[name]||{};
+  const enBase=school.en;
+  const curEnVal=o.en!=null?o.en:(enBase!=null?enBase:"");
+  let h=`<h4>${school.n}${school.p?'<span class="privtag">PRIVATE</span>':""}</h4>`;
+  if(enBase==null){
+    h+=`<div class="dmeta">No enrollment figure on file for this school — classification override unavailable.</div>`;
+  }else{
+    h+=`<div class="hostpick">
+      <label>Enrollment</label>
+      <input type="number" id="ovrEnInput" min="0" step="1" value="${curEnVal}" style="width:100px;">
+      <label style="margin-left:8px;"><input type="checkbox" id="ovrMultCheck"${o.mult?" checked":""}> apply 1.65&times; multiplier</label>
+      ${(o.en!=null||o.mult)?'<button id="ovrEnReset">Reset</button>':""}
+      <span class="fieldnote" style="margin-left:auto;">base on file: ${enBase}</span>
+    </div>`;
+    const sports=Object.keys(school.c).filter(sp=>school.c[sp]!=="S");
+    if(sports.length){
+      h+=`<table><tr><th>Sport</th><th>Current class</th><th>Effective class</th></tr>`;
+      sports.forEach(sp=>{
+        const cur=school.c[sp];
+        if(!CLASS_CUTOFFS[sp]){
+          h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td></tr>`;
+          return;
+        }
+        const eff=effectiveClass(school,sp), changed=eff!==cur;
+        h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>${eff}${changed?" <strong>(changed)</strong>":""}</td></tr>`;
+      });
+      h+="</table>";
+    }else{
+      h+=`<div class="dmeta">This school has no multi-class sports on file to reclassify.</div>`;
+    }
+  }
+  const realSports=Object.keys(ASSIGN).filter(sp=>ovrCurrentSectional(school,sp));
+  if(realSports.length){
+    h+=`<h4 style="margin-top:16px;">Sectional assignment</h4>`;
+    realSports.forEach(sp=>{
+      const curSec=ovrCurrentSectional(school,sp);
+      const overrideSec=o.sectional&&o.sectional[sp];
+      h+=`<div class="hostpick">
+        <label>${SPORTS[sp]||sp}</label>
+        <select id="ovrSec_${sp}">
+          ${ASSIGN[sp].map(g=>`<option value="${g.name.replace(/"/g,"&quot;")}"${(overrideSec||curSec)===g.name?" selected":""}>${g.name}</option>`).join("")}
+        </select>
+        <span class="fieldnote" style="margin-left:auto;">actual: ${curSec}${overrideSec?' <span class="hostnote">(moved)</span>':""}</span>
+      </div>`;
+    });
+  }
+  el.innerHTML=h;
+
+  const enInput=$("ovrEnInput"), multCheck=$("ovrMultCheck"), resetBtn=$("ovrEnReset");
+  if(enInput) enInput.onchange=()=>{
+    const v=parseFloat(enInput.value);
+    const ov=overrides[name]||(overrides[name]={});
+    if(isNaN(v)) delete ov.en; else ov.en=v;
+    pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+  };
+  if(multCheck) multCheck.onchange=()=>{
+    const ov=overrides[name]||(overrides[name]={});
+    ov.mult=multCheck.checked;
+    pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+  };
+  if(resetBtn) resetBtn.onclick=()=>{
+    const ov=overrides[name];
+    if(ov){ delete ov.en; delete ov.mult; pruneOvr(name); }
+    saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+  };
+  realSports.forEach(sp=>{
+    const sel=$("ovrSec_"+sp);
+    if(!sel) return;
+    sel.onchange=()=>{
+      const curSec=ovrCurrentSectional(school,sp);
+      const ov=overrides[name]||(overrides[name]={});
+      if(sel.value===curSec){ if(ov.sectional) delete ov.sectional[sp]; }
+      else{ ov.sectional=ov.sectional||{}; ov.sectional[sp]=sel.value; }
+      pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+    };
+  });
+}
+
+$("ovrGo").onclick=()=>{
+  const name=$("ovrPick").value;
+  if(!byName[name]){ alert("School not found — pick a name from the list."); return; }
+  renderOvrDetail(name);
+};
+$("ovrPick").addEventListener("keydown",e=>{ if(e.key==="Enter") $("ovrGo").click(); });
+$("ovrClearAll").onclick=()=>{
+  if(!Object.keys(overrides).length&&!Object.keys(cutoffOverrides).length) return;
+  if(!confirm("Clear all scenario overrides, including any classification cutoff changes?")) return;
+  overrides={}; cutoffOverrides={}; saveOverrides(); saveCutoffOverrides(); run(); renderOvrList(); renderCutoffEditor();
+  const cur=$("ovrPick").value; if(byName[cur]) renderOvrDetail(cur);
+};
 
 // ---- full data tab
 let dataSort={key:"school",dir:1};
@@ -649,20 +918,25 @@ function downloadCSV(){
 $("dl").onclick=downloadCSV;
 $("dl2").onclick=downloadCSV;
 $("dataSearch").oninput=renderDataTable;
-$("tabScenario").onclick=()=>{
-  $("tabScenario").classList.add("active"); $("tabData").classList.remove("active");
-  $("viewScenario").style.display=""; $("viewData").style.display="none";
-};
-$("tabData").onclick=()=>{
-  $("tabData").classList.add("active"); $("tabScenario").classList.remove("active");
-  $("viewData").style.display=""; $("viewScenario").style.display="none";
-};
+const TABS={Scenario:["tabScenario","viewScenario"],Data:["tabData","viewData"],Overrides:["tabOverrides","viewOverrides"]};
+function showTab(which){
+  Object.entries(TABS).forEach(([k,[tabId,viewId]])=>{
+    $(tabId).classList.toggle("active",k===which);
+    $(viewId).style.display=k===which?"":"none";
+  });
+}
+$("tabScenario").onclick=()=>showTab("Scenario");
+$("tabData").onclick=()=>showTab("Data");
+$("tabOverrides").onclick=()=>showTab("Overrides");
 
 $("sport").innerHTML=Object.entries(SPORTS).map(([k,v])=>`<option value="${k}"${k==="SOB"?" selected":""}>${v}</option>`).join("");
 $("sport").onchange=()=>{fillClasses();applyRecommendation();run();};
 $("klass").onchange=()=>{applyRecommendation();run();};
 $("privpaths").oninput=e=>{$("privpathsval").textContent=e.target.value;run();};
 $("regsize").oninput=e=>{$("regsizeval").textContent=e.target.value;run();};
+$("allschoolsOvr").innerHTML=DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("");
+renderCutoffEditor();
+renderOvrList();
 fillClasses(); applyRecommendation(); run();
 </script>
 </body>

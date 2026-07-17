@@ -11,7 +11,9 @@ current system.
 - `template.html` — the actual page source (markup, CSS, grouping/travel JS), with
   a placeholder in place of the embedded data: `const RAW = __RAW_DATA_JSON__;`.
 - `schools_data.json` — the data that gets embedded: `{"schools": [...], "assign": {...}}`,
-  one school per line for readable diffs. Output of `build_v2.py`; hand-edits (e.g.
+  one school per line for readable diffs. Each school carries `en` (base ISBE enrollment,
+  pre-multiplier; `null` for the handful of schools added only via sport-roster matching —
+  see `build_v2.py`'s `extra_rows`). Output of `build_v2.py`; hand-edits (e.g.
   resolving a review-list school's status) are also fine, then rerun `build_site.py`.
 - `build_site.py` — substitutes `schools_data.json` into `template.html`'s placeholder,
   writes `index.html`. Run this any time `template.html` or `schools_data.json` changes.
@@ -42,6 +44,16 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   else most-central member school; per-sectional host overrides supported in the UI,
   including custom venues by lat/lon). Locations are city-level ZIP centroids —
   Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
+- **Scenario Overrides tab** (in-browser only, `localStorage`, not part of the committed
+  data). Two levers, both feeding live into the Scenario Explorer and Full Data tabs:
+  - Per school: override enrollment and/or apply the 1.65× success multiplier (reclassifies
+    that school only), or manually move it to a different actual sectional
+    (FLGG/LAXB/LAXG/VBB/WPB/WPG).
+  - Per sport: edit a class's max-enrollment cutoff to reclassify every school in that sport
+    at once. Cutoffs are IHSA's official published values (`CLASS_CUTOFFS` in `template.html`,
+    current one-year cycle per ihsa.org/Schools/Enrollments-Classifications) for the 7 sports
+    this tool classifies by enrollment (BA/BKB/BKG/SBG/VBG/SOB/SOG); doesn't account for co-op
+    programs, which classify on combined enrollment rather than any one member's own figure.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:

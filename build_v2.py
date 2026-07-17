@@ -80,7 +80,8 @@ for _, r in df.iterrows():
     if pd.isna(r.lat):
         continue
     recs[r.school] = {"n": r.school, "la": round(r.lat,4), "lo": round(r.lon,4),
-                      "p": 1 if r.is_private else 0, "st": r.status, "c": {}}
+                      "p": 1 if r.is_private else 0, "st": r.status, "c": {},
+                      "en": (round(r.enrollment,1) if pd.notna(r.enrollment) else None)}
     for s in KEEP:
         v = r[s]
         if isinstance(v,str) and v.strip():
@@ -108,7 +109,7 @@ for e in extra_rows:
         report.append(f"NOGEO  {e['school']}")
         continue
     recs[e["school"]] = {"n": e["school"], "la": round(e["lat"],4), "lo": round(e["lon"],4),
-                         "p": 0, "st": "unmatched", "c": {}}
+                         "p": 0, "st": "unmatched", "c": {}, "en": None}
 
 # stamp class values
 for sport, secs in assign_out.items():
