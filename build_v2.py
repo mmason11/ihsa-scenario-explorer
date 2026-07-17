@@ -148,6 +148,36 @@ for sport, years in state_finalists.items():
             if team in recs:
                 recs[team].setdefault("fin", {}).setdefault(sport, []).append(year)
 
+# official classification flags (co-op/waiver/multiplier/success/playup) — see
+# pull_classifications.py. Authoritative for SOB/VBG/BKB/BKG (fall+winter cycle pages
+# only; no spring page found for BA/SBG/SOG as of this writing). Corrects our own
+# class value where it differs — the official page reflects co-op combined enrollment
+# schools_master.csv's per-school column can't — and records the flag for the Schools
+# tab. Deliberately excludes CHC/DAC even though the source pages cover them: those
+# use a different class-label scheme (S/M/L/C) than what's already in our data (see
+# new_sports.py's docstring), and reconciling that is a separate task.
+CLASS_FLAG_SPORTS = {"SOB", "VBG", "BKB", "BKG"}
+try:
+    with open("classifications_flags.json", encoding="utf-8") as f:
+        class_flags = json.load(f)
+except FileNotFoundError:
+    class_flags = {}
+flag_corrections = 0
+for printed, sports in class_flags.items():
+    n = norm(printed)
+    canon = master_by_norm.get(n)
+    if not canon or canon not in recs:
+        continue
+    for sport, d in sports.items():
+        if sport not in CLASS_FLAG_SPORTS:
+            continue
+        if recs[canon]["c"].get(sport) != d["class"]:
+            flag_corrections += 1
+        recs[canon]["c"][sport] = d["class"]
+        if d["flag"]:
+            recs[canon].setdefault("flg", {})[sport] = d["flag"]
+print(f"classification corrections applied (schools_master.csv value -> official): {flag_corrections}")
+
 schools_out = list(recs.values())
 with open("schools_data.json","w",encoding="utf-8",newline="\n") as f:
     f.write('{\n"schools": [\n')

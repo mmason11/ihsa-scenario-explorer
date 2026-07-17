@@ -194,14 +194,17 @@
       ihsa.org/Schools/Enrollments-Classifications) for baseball, softball, boys/girls basketball, girls volleyball,
       and boys/girls soccer — the only sports this tool classifies by enrollment. These are two separate,
       independent mechanisms: the <strong>1.65&times; multiplier</strong> applies to every private-school program
-      by default (its checkbox starts checked for private schools; public schools aren't eligible and don't get
-      the checkbox at all) — uncheck it to model a waiver. The <strong>success factor</strong> is also private-
-      only: a direct one-class bump (e.g. 2A&rarr;3A) for a private program that reached the state final 4 twice
-      in the rolling three seasons before the one in question, independent of enrollment. It's auto-computed from
-      real state-tournament results (checkbox marked "(hist.)" when it's driving the default) for the 7
-      enrollment-classified sports back to 2022-23; still editable per school if you want to explore a different
-      assumption. Neither mechanism accounts for co-op programs, which classify on their combined enrollment
-      rather than any one member's own figure. A Proposed-system move is only offered while the school is in the
+      by default unless waived — for boys soccer/girls volleyball/boys &amp; girls basketball the checkbox default
+      comes from IHSA's own published waiver flag (see the IHSA-flag column on the Schools tab); other sports fall
+      back to assuming every private program is multiplied. Public schools aren't eligible and don't get the
+      checkbox at all. The <strong>success factor</strong> is also private-only: a direct one-class bump (e.g.
+      2A&rarr;3A) for a private program that reached the state final 4 twice in the rolling three seasons before
+      the one in question, independent of enrollment — same sports get IHSA's own published flag as the default
+      (checkbox marked "(auto)"); others fall back to reconstructing it from real state-tournament results back to
+      2022-23. Both are still editable per school if you want to explore a different assumption. Neither mechanism
+      accounts for co-op programs, which classify on their combined enrollment rather than any one member's own
+      figure — also flagged directly on the Schools tab where published. A Proposed-system move is only offered
+      while the school is in the
       sport/class field currently selected above (that's what determines the Public/Private path names
       available). Overrides live only in this browser (not saved/shared). Classification cutoffs and the
       multiplier value itself are edited from the Schools tab, since those apply sport-wide (or tool-wide) rather
@@ -226,14 +229,15 @@
   <div id="viewSchools" style="display:none">
     <h3>Schools — <span id="schoolsSportLabel"></span></h3>
     <div class="tblnote">Every school with a class in the sport selected above (all classes, not just the one
-      picked in Class), with enrollment, public/private status, and the multiplier / success-factor toggles from
-      Scenario Overrides — editable right here. Success factor auto-computes from real state-tournament results
-      back to 2022-23 (marked "hist." when that's driving the checkbox; see Scenario Overrides for the
-      rolling-three-year rule) and is still editable per school. "Expected next year" applies the same rule to
-      next season's window, off this year's enrollment/multiplier at the official 1.65&times; (not any scenario
-      overrides currently in effect) — a projection, not a guarantee: it can't see next year's actual enrollment
-      or tournament results, only what the window shift by itself implies. Change the sport in the controls above
-      to see a different one.</div>
+      picked in Class), with enrollment, IHSA's own published flag where available (co-op host, multiplier waived/
+      applies, success formula, played up — from IHSA's color-coded classification pages, fall+winter cycle only;
+      no spring page has been found posted for baseball/softball/girls soccer), and the multiplier / success-
+      factor toggles from Scenario Overrides — editable right here, defaulting to the flag where we have one
+      (marked "auto") or a reconstruction from real state-tournament results back to 2022-23 otherwise. "Expected
+      next year" projects the success-factor rule to next season's window, off this year's enrollment/multiplier
+      at the official 1.65&times; (not any scenario overrides currently in effect) — not a guarantee, since it
+      can't see next year's actual enrollment, tournament results, or flags. Change the sport in the controls
+      above to see a different one.</div>
 
     <div id="schoolsCutoffSection">
       <h4 style="margin-top:10px;">Classification cutoffs</h4>
@@ -335,6 +339,18 @@ function pruneOvr(name){
 //   2023-24/24-25/25-26). Applies to public and private alike. Not automated — we
 //   don't have Final-4 history yet (same data gap as the planned football simulator,
 //   see CLAUDE.md) — so the checkbox is a manual "this program earned the bump" toggle.
+// IHSA's own published classification pages (see pull_classifications.py) flag each
+// program's actual waiver status directly for SOB/VBG/BKB/BKG (fall+winter cycle only
+// — no spring page found for BA/SBG/SOG) — ground truth, better than assuming every
+// private program is multiplied. "waived"/"multiplier" are the only two flags that
+// speak to this; other flags (coop/success/playup) don't rule either way, so fall
+// through to the blanket default for those.
+function officialMultState(school,sport){
+  const f=school.flg&&school.flg[sport];
+  if(f==="waived") return false;
+  if(f==="multiplier") return true;
+  return null;
+}
 function effectiveEnrollment(school,sport){
   const o=overrides[school.n];
   const base=(o&&o.en!=null)?o.en:school.en;
@@ -344,7 +360,8 @@ function effectiveEnrollment(school,sport){
   // there is unreachable via the UI. hasOwnProperty distinguishes "explicitly waived"
   // from "no override yet" — both would otherwise look like a falsy mult[sport].
   const explicit=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport)?o.mult[sport]:null;
-  const multOn=explicit!=null?explicit:school.p;
+  const official=officialMultState(school,sport);
+  const multOn=explicit!=null?explicit:(official!=null?official:school.p);
   return multOn?base*multiplierValue:base;
 }
 function bumpClass(sport,cls){
@@ -367,7 +384,16 @@ function finalistCount(school,sport,window){
 // — this is the actual rule, not a guess: >=2 state-trophy (final-4) appearances in the
 // rolling window. Still overridable per school/sport in Scenario Overrides/Schools tab.
 function autoSuccessFactor(school,sport,window){
-  return school.p&&finalistCount(school,sport,window||SF_WINDOW_CUR)>=2;
+  if(!school.p) return false;
+  const useWindow=window||SF_WINDOW_CUR;
+  // IHSA's own "success formula" flag is ground truth for the CURRENT window (it's a
+  // same-year snapshot, so it can't speak to a future window) — trust it over
+  // reconstructing from history when we have flag data at all for this school/sport
+  // (its absence there means "not flagged this way", a real answer, not a gap).
+  if(useWindow===SF_WINDOW_CUR&&school.flg&&school.flg[sport]!==undefined){
+    return school.flg[sport]==="success";
+  }
+  return finalistCount(school,sport,useWindow)>=2;
 }
 // Official IHSA classification cutoffs (current one-year cycle, ihsa.org/Schools/
 // Enrollments-Classifications): each entry is [classLabel, maxEnrollmentInclusive],
@@ -1063,24 +1089,27 @@ function renderOvrDetail(name){
     </div>`;
     const sports=Object.keys(school.c).filter(sp=>school.c[sp]!=="S");
     if(sports.length){
-      h+=`<table><tr><th>Sport</th><th>Current class</th><th>1.65&times; multiplier${school.p?"":" (private only)"}</th>
+      h+=`<table><tr><th>Sport</th><th>Current class</th><th>IHSA flag</th><th>1.65&times; multiplier${school.p?"":" (private only)"}</th>
         <th>Success factor${school.p?"":" (private only)"}</th><th>Effective class</th><th>Expected next year</th></tr>`;
       sports.forEach(sp=>{
         const cur=school.c[sp];
         if(!CLASS_CUTOFFS[sp]){
-          h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—</td><td>—</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td><td>—</td></tr>`;
+          h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—</td><td>—</td><td>—</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td><td>—</td></tr>`;
           return;
         }
+        const flag=(school.flg&&school.flg[sp])||null;
         const multExplicit=o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp);
-        const multOn=multExplicit?o.mult[sp]:school.p;
+        const official=officialMultState(school,sp);
+        const multOn=multExplicit?o.mult[sp]:(official!=null?official:school.p);
         const successExplicit=o.success&&Object.prototype.hasOwnProperty.call(o.success,sp);
         const autoSuccess=autoSuccessFactor(school,sp);
         const successOn=successExplicit?o.success[sp]:autoSuccess;
         const eff=effectiveClass(school,sp), changed=eff!==cur;
         const nextCls=nextYearClass(school,sp);
         h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td>
+          <td>${flag?FLAG_LABELS[flag]:"—"}</td>
           <td>${school.p?`<input type="checkbox" class="ovrMultSport" data-sport="${sp}"${multOn?" checked":""}>`:"—"}</td>
-          <td>${school.p?`<input type="checkbox" class="ovrSuccessSport" data-sport="${sp}"${successOn?" checked":""}>${autoSuccess?' <span class="fieldnote">(from history)</span>':""}`:"—"}</td>
+          <td>${school.p?`<input type="checkbox" class="ovrSuccessSport" data-sport="${sp}"${successOn?" checked":""}>${autoSuccess?' <span class="fieldnote">(auto)</span>':""}`:"—"}</td>
           <td>${eff}${changed?" <strong>(changed)</strong>":""}</td>
           <td>${nextCls}${nextCls!==cur?' <span class="fieldnote">(changes)</span>':""}</td></tr>`;
       });
@@ -1158,9 +1187,12 @@ function renderOvrDetail(name){
       const sp=cb.dataset.sport;
       const ov=overrides[name]||(overrides[name]={});
       ov.mult=ov.mult||{};
-      // checkbox only renders for private schools, whose default is "on" — so checked
-      // just matches the default (nothing to store) and unchecked is an explicit waiver.
-      if(cb.checked) delete ov.mult[sp]; else ov.mult[sp]=false;
+      // default is IHSA's own waived/multiplier flag where we have it (see
+      // officialMultState), else the blanket "every private program is multiplied"
+      // assumption — checked matching that default means nothing to store.
+      const officialSp=officialMultState(school,sp);
+      const defaultOn=officialSp!=null?officialSp:school.p;
+      if(cb.checked===defaultOn) delete ov.mult[sp]; else ov.mult[sp]=cb.checked;
       pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
     };
   });
@@ -1255,8 +1287,10 @@ function renderDataTable(){
 let schoolsSort={key:"school",dir:1};
 const SCOLS=[
   ["school","School",false],["type","Type",false],["en","Enrollment",true],["adjEn","Adjusted enrollment",true],
-  ["cls","Class",false],["mult","1.65× multiplier",false],["success","Success factor",false],
-  ["nextCls","Expected next year",false]];
+  ["cls","Class",false],["flag","IHSA flag",false],["mult","1.65× multiplier",false],
+  ["success","Success factor",false],["nextCls","Expected next year",false]];
+
+const FLAG_LABELS={coop:"Co-op",waived:"Waived",multiplier:"Multiplier",success:"Success",playup:"Play up"};
 
 function schoolsRows(){
   const sp=$("sport").value;
@@ -1264,12 +1298,14 @@ function schoolsRows(){
     const o=overrides[d.n];
     const successExplicit=o&&o.success&&Object.prototype.hasOwnProperty.call(o.success,sp);
     const autoSuccess=autoSuccessFactor(d,sp);
+    const official=officialMultState(d,sp);
     return {
       school:d.n, priv:d.p, type:d.p?"Private":"Public", en:d.en,
       adjEn:effectiveEnrollment(d,sp),
       cls:effectiveClass(d,sp), baseCls:d.c[sp], nextCls:nextYearClass(d,sp),
+      flag:(d.flg&&d.flg[sp])||null,
       multEligible:d.p&&!!CLASS_CUTOFFS[sp],
-      multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:d.p,
+      multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:(official!=null?official:d.p),
       successEligible:d.p&&!!CLASS_CUTOFFS[sp],
       successOn:successExplicit?o.success[sp]:autoSuccess, successAuto:autoSuccess,
     };
@@ -1317,8 +1353,9 @@ function renderSchoolsTable(){
       <td>${r.en!=null?r.en:"—"}</td>
       <td>${r.adjEn!=null?r.adjEn.toFixed(1):"—"}${enChanged?' <span class="fieldnote">(×1.65)</span>':""}</td>
       <td>${r.cls==="S"?"Single class":r.cls}${changed?" <strong>(changed)</strong>":""}</td>
+      <td style="text-align:left">${r.flag?FLAG_LABELS[r.flag]:"—"}</td>
       <td>${r.multEligible?`<input type="checkbox" class="schMult" data-school="${esc}"${r.multOn?" checked":""}>`:"—"}</td>
-      <td>${r.successEligible?`<input type="checkbox" class="schSuccess" data-school="${esc}"${r.successOn?" checked":""}>${r.successAuto?' <span class="fieldnote">(hist.)</span>':""}`:"—"}</td>
+      <td>${r.successEligible?`<input type="checkbox" class="schSuccess" data-school="${esc}"${r.successOn?" checked":""}>${r.successAuto?' <span class="fieldnote">(auto)</span>':""}`:"—"}</td>
       <td>${r.nextCls}${r.nextCls!==r.baseCls?' <span class="fieldnote">(changes)</span>':""}</td></tr>`;
   });
   $("schoolsTable").innerHTML=h;
@@ -1332,11 +1369,12 @@ function renderSchoolsTable(){
   $("schoolsTable").querySelectorAll(".schMult").forEach(cb=>{
     cb.onchange=()=>{
       const nm=cb.dataset.school, sp2=$("sport").value;
+      const sch=byName[nm];
       const ov=overrides[nm]||(overrides[nm]={});
       ov.mult=ov.mult||{};
-      // checkbox only renders for private schools (default "on"): checked matches the
-      // default (nothing to store), unchecked is an explicit waiver.
-      if(cb.checked) delete ov.mult[sp2]; else ov.mult[sp2]=false;
+      const officialSp=officialMultState(sch,sp2);
+      const defaultOn=officialSp!=null?officialSp:sch.p;
+      if(cb.checked===defaultOn) delete ov.mult[sp2]; else ov.mult[sp2]=cb.checked;
       pruneOvr(nm); saveOverrides(); run();
       if($("ovrPick").value===nm) renderOvrDetail(nm);
     };
@@ -1356,10 +1394,10 @@ function renderSchoolsTable(){
 
 function downloadSchoolsCSV(){
   const sp=$("sport").value;
-  const head="school,type,enrollment,adjusted_enrollment,class,base_class,multiplier,success_factor\n";
+  const head="school,type,enrollment,adjusted_enrollment,class,base_class,ihsa_flag,multiplier,success_factor,expected_next_year\n";
   const body=schoolsRows().map(r=>[JSON.stringify(r.school),r.type,r.en!=null?r.en:"",
     r.adjEn!=null?r.adjEn.toFixed(1):"",JSON.stringify(r.cls),JSON.stringify(r.baseCls),
-    r.multOn,r.successOn].join(",")).join("\n");
+    JSON.stringify(r.flag||""),r.multOn,r.successOn,JSON.stringify(r.nextCls)].join(",")).join("\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([head+body],{type:"text/csv"}));
   a.download=`ihsa_${sp}_schools.csv`; a.click();

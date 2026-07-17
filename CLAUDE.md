@@ -50,6 +50,23 @@ current system.
   and in fact pulls from the very same bracket pages plus one prior-season archive
   (`ihsa.org/archive/{sport}/{year}/{class}pair.htm`, confirmed to go back to at least
   2021-22) for the two years before what's on the live site.
+- `classifications_flags.json` — `{school: {sport: {"class": "2A", "flag": "coop"|
+  "waived"|"multiplier"|"success"|"playup"|null}}}` for SOB/VBG/BKB/BKG (fall+winter
+  cycle pages only — no spring page has been found posted or archived for the
+  2025-26 cycle, so BA/SBG/SOG aren't covered). Output of `pull_classifications.py`;
+  `build_v2.py` uses it to correct `schools_master.csv`'s class value where it
+  differs (co-op combined enrollment isn't in that column) and embeds the flag
+  itself per school as `flg`.
+- `pull_classifications.py` — parses IHSA's color-coded School Classifications pages
+  (ihsa.org/Schools/Enrollments-Classifications) into `classifications_flags.json`.
+  Not part of the main pipeline; re-run each cycle (fetch commands in its docstring).
+  This is the authoritative source for things this tool previously only guessed —
+  co-op status, per-program multiplier waiver, and IHSA's own "success formula" flag
+  — cross-validated against `state_finalists.json`'s independently-reconstructed
+  success-factor calls (Peoria (Notre Dame): both agree exactly on SOB and BKG) and
+  against the class values already in `schools_master.csv` (97.9% agreement; the 42
+  disagreements are mostly co-op, the rest are real errors in the older data, now
+  corrected by this source taking precedence).
 - `scenario_engine.py` — Python mirror of the in-page grouping/travel logic.
 - `schools_needing_review.csv` — header-only now; all 29 previously-unverified schools were
   researched and resolved July 2026 via `REVIEW_RESOLUTIONS` in `prepare_data.py` (kept there,
@@ -84,18 +101,25 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 - **Success factor** (private-only, like the multiplier — a public school never gets the
   checkbox regardless of history): a direct one-class bump (e.g. 2A→3A) for a private program
   that reached the state final 4 twice in the rolling three seasons before the one in
-  question. Auto-computed from real results (`template.html`'s `autoSuccessFactor()`, off
-  `school.fin` / `state_finalists.json`) rather than manual — checkbox shows "(hist./hist.)"
-  when history is what's driving it, still overridable per school to explore a different
-  assumption. Validated by hand against Peoria (Notre Dame) boys soccer (2022-23 champion,
-  2023-24 runner-up → 3A this year; only 2023-24 survives into next year's window → drops to
-  2A) before wiring in. Only explains a minority of "actual class higher than enrollment alone
-  would predict" cases (11 of 177 checked) — most of the rest are almost certainly co-op
-  combined enrollment, which isn't modeled (see above); don't over-read the unexplained ones
-  as success-factor gaps. `effectiveClass()` is careful not to double-bump: the transcribed
-  base class already includes any real success-factor bump, so it's returned untouched unless
-  something *actually* changed (enrollment/multiplier/cutoff override, or an explicit
-  success-factor override that disagrees with the auto-computed value).
+  question. `autoSuccessFactor()` prefers IHSA's own published "success formula" flag
+  (`classifications_flags.json`, SOB/VBG/BKB/BKG only — checkbox shows "(auto)") over
+  reconstructing it from `state_finalists.json`'s history (used for BA/SBG/SOG, and always
+  for the *next-year* projection, since the flag is a same-year snapshot); still overridable
+  per school. Validated by hand against Peoria (Notre Dame) boys soccer (2022-23 champion,
+  2023-24 runner-up → 3A this year, exactly matching IHSA's own "success" flag; only 2023-24
+  survives into next year's window → projected to drop to 2A) before wiring in.
+  `effectiveClass()` is careful not to double-bump: the transcribed base class already
+  includes any real success-factor bump, so it's returned untouched unless something
+  *actually* changed (enrollment/multiplier/cutoff override, or an explicit success-factor
+  override that disagrees with the auto-computed value).
+- **Multiplier waiver**: same idea — `officialMultState()` prefers IHSA's own published
+  waived/multiplier flag for SOB/VBG/BKB/BKG, falling back to "every private program is
+  multiplied unless the user says otherwise" for BA/SBG/SOG and anywhere else the flag data
+  doesn't cover. Cross-validating this data against the class values already in
+  `schools_master.csv` also caught and fixed 28 real errors (mostly co-op combined
+  enrollment, e.g. Batavia SOB was recorded as 2A but is actually 3A) — most of the
+  previously-unexplained "actual class higher than enrollment alone predicts" cases turned
+  out to be exactly this.
 - **Scenario Overrides tab** (in-browser only, `localStorage`, not part of the committed
   data). Two per-school, per-sport levers, feeding live into the Scenario Explorer and Full
   Data tabs: override enrollment; toggle the 1.65× multiplier (applies by default to every
@@ -111,11 +135,13 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   into.
 - **Schools tab**: every school with a class in the sport picked up top (all classes at once,
   not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/
-  override, via `effectiveEnrollment`), public/private, effective class, expected class *next*
-  year (`nextYearClass()` — enrollment at the official 1.65× regardless of any scenario
-  overrides in effect, plus next year's rolling success-factor window; a projection, since it
-  can't know next year's actual enrollment or results), and inline multiplier/success-factor
-  checkboxes that write into the same overrides as the Scenario Overrides tab. Filterable by
+  override, via `effectiveEnrollment`), public/private, effective class, IHSA's own published
+  flag where available (co-op/waived/multiplier/success/played-up — `classifications_flags.json`,
+  SOB/VBG/BKB/BKG only), expected class *next* year (`nextYearClass()` — enrollment at the
+  official 1.65× regardless of any scenario overrides in effect, plus next year's rolling
+  success-factor window; a projection, since it can't know next year's actual enrollment or
+  results), and inline multiplier/success-factor checkboxes that write into the same overrides
+  as the Scenario Overrides tab. Filterable by
   type and class, sortable/searchable/CSV, same pattern as Full Data. Also hosts two sport-
   wide/tool-wide levers (moved here from Scenario Overrides since they aren't per-school): a
   classification-cutoff editor (slider + number input per class boundary, reclassifying the
