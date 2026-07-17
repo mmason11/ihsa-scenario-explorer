@@ -78,12 +78,17 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
     current one-year cycle per ihsa.org/Schools/Enrollments-Classifications) for the 7 sports
     this tool classifies by enrollment (BA/BKB/BKG/SBG/VBG/SOB/SOG); doesn't account for co-op
     programs, which classify on combined enrollment rather than any one member's own figure.
-  - Per school, per sport: manually move it to a different sectional — on the Current map for
-    the 6 actual-assignment sports (FLGG/LAXB/LAXG/VBB/WPB/WPG), or on the Proposed map for
-    whichever sport+class is currently selected in the top controls (Public/Private path
-    names depend on that selection). Sectional-level only — regionals are recomputed
-    geographically every run with no persistent identity, so there's no stable "regional N"
-    to move a school into.
+  - Per school, per sport: manually move it to a different sectional — both Current and
+    Proposed, tied to whichever sport+class is currently selected in the top controls (that's
+    what determines the available target names). Current uses real sectional names where we
+    have them (SOB + the 6 single-class sports) or "Sectional N" to match the modeled split
+    otherwise; Proposed always uses "Public/Private path N". Sectional-level only — regionals
+    are recomputed geographically every run with no persistent identity, so there's no stable
+    "regional N" to move a school into.
+- **Schools tab**: every school with a class in the sport picked up top (all classes at once,
+  not filtered by the Class control) — enrollment, public/private, effective class, and inline
+  1.65× multiplier / success-factor checkboxes that write into the same overrides as the
+  Scenario Overrides tab. Sortable/searchable/CSV, same pattern as Full Data.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
