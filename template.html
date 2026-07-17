@@ -187,13 +187,20 @@
 
   <div id="viewOverrides" style="display:none">
     <h3>Scenario overrides</h3>
-    <div class="tblnote">Adjust a school's enrollment, apply the 1.65&times; success multiplier, or move it to a
-      different sectional — the Scenario Explorer and Full Data tabs reflect it immediately. Reclassification
-      uses IHSA's published enrollment cutoffs (current one-year cycle, ihsa.org/Schools/Enrollments-Classifications)
-      for baseball, softball, boys/girls basketball, girls volleyball, and boys/girls soccer — the only sports
-      this tool classifies by enrollment. It doesn't account for co-op programs, which classify on their combined
-      enrollment rather than any one member's own figure. Overrides live only in this browser (not saved/shared)
-      and apply across every sport/class combination above.</div>
+    <div class="tblnote">Adjust a school's enrollment, toggle the 1.65&times; multiplier or success-factor class
+      bump per sport, or move it to a different sectional — the Scenario Explorer and Full Data tabs reflect it
+      immediately. Reclassification uses IHSA's published enrollment cutoffs (current one-year cycle,
+      ihsa.org/Schools/Enrollments-Classifications) for baseball, softball, boys/girls basketball, girls volleyball,
+      and boys/girls soccer — the only sports this tool classifies by enrollment. These are two separate,
+      independent mechanisms, both manual stand-ins since the tool doesn't have the history to compute either
+      automatically yet: the <strong>1.65&times; multiplier</strong> applies to every private-school program by
+      default unless it has a waiver (public schools aren't eligible — the checkbox only shows for private
+      schools), and the <strong>success factor</strong> is a direct one-class bump (e.g. 2A&rarr;3A) for a program
+      that reached the state final 4 twice in the rolling three seasons before the one in question — public or
+      private, independent of enrollment. Doesn't account for co-op programs, which classify on their combined
+      enrollment rather than any one member's own figure. A Proposed-system move is only offered while the school
+      is in the sport/class field currently selected above (that's what determines the Public/Private path names
+      available). Overrides live only in this browser (not saved/shared).</div>
 
     <h3 style="margin-top:26px;">Classification cutoffs</h3>
     <div class="tblnote">Edit a class's max-enrollment boundary to reclassify every school in that sport at
@@ -226,7 +233,7 @@
     Method: where actual IHSA assignments are unavailable, schools are grouped by recursive geographic
     bisection (balanced, contiguous splits), mirroring how sectional and regional boundaries are drawn;
     regional subdivisions are always modeled at the chosen size. Travel is one-way straight-line distance to the host site: the named IHSA sectional host where
-    assignments are actual, otherwise the most centrally located member school (host schools travel 0). Any sectional's host can be reassigned from its roster panel — to another member, any IHSA school, or a custom venue by coordinates.
+    assignments are actual, otherwise the most centrally located member school (host schools travel 0). Any sectional's host can be reassigned from its roster panel — to another member, any IHSA school, or a custom venue by address (geocoded via OpenStreetMap).
     School locations are city-level ZIP centroids, so figures understate true road miles by roughly
     15&ndash;25% and Chicago-to-Chicago trips read as zero. Recommended private paths =
     8 &times; private share of the field, rounded, kept between 1 and 4. Sources: 2025 girls flag
@@ -253,20 +260,49 @@ const HUES = ["#46608c","#7a5c9e","#2e7d6f","#b5651d","#5b7a3a","#8c4670","#3a6f
 const byName = {}; DATA.forEach(d=>byName[d.n]=d);
 
 // ---- scenario overrides (enrollment/multiplier/sectional) — local to this browser only
-const OVR_KEY="ihsa_scenario_overrides_v1";
+// v2: mult became per-sport (IHSA's 1.65x success multiplier is a per-program call,
+// not a whole-school one — see CLASS_CUTOFFS comment below for the actual rule) and
+// sectional became {sport: {Current, Proposed}} instead of {sport: name}.
+const OVR_KEY="ihsa_scenario_overrides_v2";
 let overrides={};
 try{ overrides=JSON.parse(localStorage.getItem(OVR_KEY)||"{}"); }catch(e){ overrides={}; }
 function saveOverrides(){ try{ localStorage.setItem(OVR_KEY,JSON.stringify(overrides)); }catch(e){} }
 function pruneOvr(name){
   const o=overrides[name]; if(!o) return;
-  if(o.sectional && !Object.keys(o.sectional).length) delete o.sectional;
-  if(o.en==null && !o.mult && !o.sectional) delete overrides[name];
+  if(o.mult && !Object.keys(o.mult).length) delete o.mult;
+  if(o.success && !Object.keys(o.success).length) delete o.success;
+  if(o.sectional){
+    Object.keys(o.sectional).forEach(sp=>{
+      if(!Object.keys(o.sectional[sp]).length) delete o.sectional[sp];
+    });
+    if(!Object.keys(o.sectional).length) delete o.sectional;
+  }
+  if(o.en==null && !o.mult && !o.success && !o.sectional) delete overrides[name];
 }
-function effectiveEnrollment(school){
+// Two SEPARATE mechanisms, both per PROGRAM (a school can differ sport to sport):
+// - Multiplier (1.65x enrollment): applies to every PRIVATE program by default,
+//   unless that program has a waiver — we don't have per-program waiver data, so
+//   the checkbox defaults off (i.e. matches each school's real/base class as
+//   transcribed, which already reflects whatever was actually in force) and is a
+//   manual "toggle the multiplier for this scenario" switch, private schools only.
+// - Success factor: a DIRECT one-class bump (e.g. 2A->3A), independent of enrollment,
+//   for a program that reached the state final 4 twice in the rolling three seasons
+//   before the season in question (2025-26 -> 2022-23/23-24/24-25; 2026-27 shifts to
+//   2023-24/24-25/25-26). Applies to public and private alike. Not automated — we
+//   don't have Final-4 history yet (same data gap as the planned football simulator,
+//   see CLAUDE.md) — so the checkbox is a manual "this program earned the bump" toggle.
+function effectiveEnrollment(school,sport){
   const o=overrides[school.n];
   const base=(o&&o.en!=null)?o.en:school.en;
   if(base==null) return null;
-  return (o&&o.mult)?base*1.65:base;
+  const multOn=school.p&&o&&o.mult&&o.mult[sport];
+  return multOn?base*1.65:base;
+}
+function bumpClass(sport,cls){
+  const table=effectiveCutoffs(sport);
+  const idx=table.findIndex(([k])=>k===cls);
+  if(idx<0) return cls;
+  return table[Math.min(idx+1,table.length-1)][0];
 }
 // Official IHSA classification cutoffs (current one-year cycle, ihsa.org/Schools/
 // Enrollments-Classifications): each entry is [classLabel, maxEnrollmentInclusive],
@@ -304,9 +340,10 @@ function effectiveClass(school,sport){
   const base=school.c[sport];
   if(!base||base==="S"||!CLASS_CUTOFFS[sport]) return base;
   const o=overrides[school.n];
-  const hasEnOverride=o&&(o.en!=null||o.mult);
-  if(!hasEnOverride&&!cutoffOverrides[sport]) return base;
-  return predictClass(sport,effectiveEnrollment(school),base);
+  const hasEnOverride=o&&(o.en!=null||(school.p&&o.mult&&o.mult[sport]));
+  let cls=(hasEnOverride||cutoffOverrides[sport])?predictClass(sport,effectiveEnrollment(school,sport),base):base;
+  if(o&&o.success&&o.success[sport]) cls=bumpClass(sport,cls);
+  return cls;
 }
 function ovrCurrentSectional(school,sport){
   if(!ASSIGN[sport]) return null;
@@ -501,7 +538,7 @@ function renderDetail(which){
         </optgroup>
         <optgroup label="Other">
           <option value="any">Any IHSA school…</option>
-          <option value="custom"${ov&&ov.custom?" selected":""}>Custom venue (name + coordinates)…</option>
+          <option value="custom"${ov&&ov.custom?" selected":""}>Custom venue (by address)…</option>
         </optgroup>
       </select>
       <span id="hostExtra${which}"></span>
@@ -547,20 +584,49 @@ function wireHostPicker(which, si){
         run();
       };
     }else if(v==="custom"){
-      extra.innerHTML=`<input id="cn${which}" placeholder="Venue name">
-        <input id="cla${which}" type="number" step="0.0001" placeholder="Latitude">
-        <input id="clo${which}" type="number" step="0.0001" placeholder="Longitude">
-        <button id="cgo${which}">Set</button>`;
-      document.getElementById("cgo"+which).onclick=()=>{
-        const n=document.getElementById("cn"+which).value.trim()||"Custom venue";
-        const la=parseFloat(document.getElementById("cla"+which).value);
-        const lo=parseFloat(document.getElementById("clo"+which).value);
-        if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){alert("Enter Illinois coordinates (lat 36–43, lon −92 to −87). Right-click a spot in Google Maps to copy them.");return;}
-        hostOverrides[which][si]={n:n, la:la, lo:lo, custom:true};
-        run();
-      };
+      extra.innerHTML=`<input id="cn${which}" placeholder="Venue name (optional)" style="width:150px;">
+        <input id="caddr${which}" placeholder="Street address, city, IL" style="min-width:220px;">
+        <button id="cgo${which}">Look up &amp; set</button>
+        <span id="cstatus${which}" class="fieldnote"></span>`;
+      document.getElementById("cgo"+which).onclick=()=>geocodeAndSetHost(which,si);
+      document.getElementById("caddr"+which).addEventListener("keydown",e=>{
+        if(e.key==="Enter") geocodeAndSetHost(which,si);
+      });
     }
   };
+}
+
+// Geocodes a street address via OpenStreetMap Nominatim (no key required; the
+// tool's request volume is low enough to stay well within Nominatim's public
+// usage policy of ~1 req/sec). Falls back to nothing but an on-screen message
+// if the lookup fails — no coordinate-entry fallback, since that's the whole
+// thing being replaced here.
+async function geocodeAndSetHost(which,si){
+  const addrInput=document.getElementById("caddr"+which);
+  const status=document.getElementById("cstatus"+which);
+  const btn=document.getElementById("cgo"+which);
+  const addr=addrInput.value.trim();
+  if(!addr){ status.textContent="Enter a street address first."; return; }
+  btn.disabled=true; status.textContent="Looking up…";
+  try{
+    const q=/\bil(linois)?\b/i.test(addr)?addr:`${addr}, Illinois`;
+    const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`;
+    const res=await fetch(url,{headers:{"Accept":"application/json"}});
+    if(!res.ok) throw new Error("bad response");
+    const results=await res.json();
+    if(!results.length){ status.textContent="Address not found — try adding a city or ZIP."; btn.disabled=false; return; }
+    const la=parseFloat(results[0].lat), lo=parseFloat(results[0].lon);
+    if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){
+      status.textContent="That address is outside Illinois — check it and try again.";
+      btn.disabled=false; return;
+    }
+    const n=document.getElementById("cn"+which).value.trim()||addr;
+    hostOverrides[which][si]={n:n, la:la, lo:lo, custom:true};
+    run();
+  }catch(e){
+    status.textContent="Lookup failed — check your connection and try again.";
+    btn.disabled=false;
+  }
 }
 
 const $=id=>document.getElementById(id);
@@ -571,6 +637,22 @@ function recommendPaths(field,priv){
   if(!priv.length) return 1;
   const share=priv.length/field.length;
   return Math.min(4,Math.max(1,Math.round(8*share)));
+}
+
+// Moves schools with a manual sectional override into their target group.
+// Checks the target exists in THIS run's groups before removing the school from
+// its natural one — Proposed group names ("Public path N"/"Private path N") shift
+// with the private-paths slider, so a stale override could otherwise just delete
+// a school from the map instead of moving it.
+function applySectionalOverrides(groups,sp,which){
+  DATA.forEach(d=>{
+    const target=overrides[d.n]&&overrides[d.n].sectional&&overrides[d.n].sectional[sp]&&overrides[d.n].sectional[sp][which];
+    if(!target) return;
+    const tg=groups.find(g=>g.name===target);
+    if(!tg) return;
+    groups.forEach(g=>{ const idx=g.members.indexOf(d); if(idx>=0) g.members.splice(idx,1); });
+    if(!tg.members.includes(d)) tg.members.push(d);
+  });
 }
 
 function run(){
@@ -602,13 +684,7 @@ function run(){
     curGroups=ASSIGN[sp].map(sec=>({name:sec.name,
       host:sec.name.replace(/\s+Sectional\s*$/,""),
       members:sec.schools.map(n=>byName[n]).filter(Boolean)}));
-    DATA.forEach(d=>{
-      const target=overrides[d.n]&&overrides[d.n].sectional&&overrides[d.n].sectional[sp];
-      if(!target) return;
-      curGroups.forEach(g=>{ const idx=g.members.indexOf(d); if(idx>=0) g.members.splice(idx,1); });
-      const tg=curGroups.find(g=>g.name===target);
-      if(tg&&!tg.members.includes(d)) tg.members.push(d);
-    });
+    applySectionalOverrides(curGroups,sp,"Current");
   }else{
     curGroups=simGroups(field,8,"Sectional");
   }
@@ -618,6 +694,7 @@ function run(){
   const pubGroups=simGroups(pub,8-P,"Public path");
   const prvGroups=priv.length?simGroups(priv,P,"Private path"):[];
   const propGroups=pubGroups.concat(prvGroups);
+  applySectionalOverrides(propGroups,sp,"Proposed");
   const propRows=[];
   propGroups.forEach((g,gi)=>{
     if(hostOverrides.Proposed[gi]) g.hostLoc=hostOverrides.Proposed[gi];
@@ -749,13 +826,24 @@ function renderOvrList(){
     ?`${names.length} school override(s) · ${cutoffSports.length} sport cutoff override(s)${cutoffSports.length?` (${cutoffSports.map(sp=>SPORTS[sp]||sp).join(", ")})`:""}.`
     :"No active overrides.";
   if(!names.length){ $("ovrListTable").innerHTML=""; return; }
-  let h=`<tr><th style="text-align:left">School</th><th style="text-align:left">Enrollment</th><th style="text-align:left">Sectional moves</th><th></th></tr>`;
+  let h=`<tr><th style="text-align:left">School</th><th style="text-align:left">Enrollment</th><th style="text-align:left">Success factor</th><th style="text-align:left">Sectional moves</th><th></th></tr>`;
   names.forEach(n=>{
     const o=overrides[n], s=byName[n];
-    const enPart=(o.en!=null||o.mult)?`${o.en!=null?o.en:(s?s.en:"?")}${o.mult?" ×1.65":""}`:"—";
+    const multSports=o.mult?Object.keys(o.mult).map(sp=>SPORTS[sp]||sp):[];
+    const enPart=(o.en!=null||multSports.length)
+      ?`${o.en!=null?o.en:(s?s.en:"?")}${multSports.length?` ×1.65 (${multSports.join(", ")})`:""}`:"—";
+    const successPart=o.success&&Object.keys(o.success).length
+      ?Object.keys(o.success).map(sp=>SPORTS[sp]||sp).join(", "):"—";
     const secPart=(o.sectional&&Object.keys(o.sectional).length)
-      ?Object.entries(o.sectional).map(([sp,g])=>`${SPORTS[sp]||sp} → ${g}`).join("; "):"—";
+      ?Object.entries(o.sectional).map(([sp,v])=>{
+          const parts=[];
+          if(v.Current) parts.push(`${SPORTS[sp]||sp} current→${v.Current}`);
+          if(v.Proposed) parts.push(`${SPORTS[sp]||sp} proposed→${v.Proposed}`);
+          return parts.join("; ");
+        }).filter(Boolean).join("; ")||"—"
+      :"—";
     h+=`<tr><td style="text-align:left">${n}</td><td style="text-align:left">${enPart}</td>
+      <td style="text-align:left">${successPart}</td>
       <td style="text-align:left">${secPart}</td>
       <td><button data-name="${n.replace(/"/g,"&quot;")}" class="ovrRemove">Remove</button></td></tr>`;
   });
@@ -783,21 +871,25 @@ function renderOvrDetail(name){
     h+=`<div class="hostpick">
       <label>Enrollment</label>
       <input type="number" id="ovrEnInput" min="0" step="1" value="${curEnVal}" style="width:100px;">
-      <label style="margin-left:8px;"><input type="checkbox" id="ovrMultCheck"${o.mult?" checked":""}> apply 1.65&times; multiplier</label>
-      ${(o.en!=null||o.mult)?'<button id="ovrEnReset">Reset</button>':""}
+      ${(o.en!=null)?'<button id="ovrEnReset">Reset enrollment</button>':""}
       <span class="fieldnote" style="margin-left:auto;">base on file: ${enBase}</span>
     </div>`;
     const sports=Object.keys(school.c).filter(sp=>school.c[sp]!=="S");
     if(sports.length){
-      h+=`<table><tr><th>Sport</th><th>Current class</th><th>Effective class</th></tr>`;
+      h+=`<table><tr><th>Sport</th><th>Current class</th><th>1.65&times; multiplier${school.p?"":" (private only)"}</th><th>Success factor</th><th>Effective class</th></tr>`;
       sports.forEach(sp=>{
         const cur=school.c[sp];
         if(!CLASS_CUTOFFS[sp]){
-          h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td></tr>`;
+          h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—</td><td>—</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td></tr>`;
           return;
         }
+        const multOn=!!(o.mult&&o.mult[sp]);
+        const successOn=!!(o.success&&o.success[sp]);
         const eff=effectiveClass(school,sp), changed=eff!==cur;
-        h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>${eff}${changed?" <strong>(changed)</strong>":""}</td></tr>`;
+        h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td>
+          <td>${school.p?`<input type="checkbox" class="ovrMultSport" data-sport="${sp}"${multOn?" checked":""}>`:"—"}</td>
+          <td><input type="checkbox" class="ovrSuccessSport" data-sport="${sp}"${successOn?" checked":""}></td>
+          <td>${eff}${changed?" <strong>(changed)</strong>":""}</td></tr>`;
       });
       h+="</table>";
     }else{
@@ -806,49 +898,95 @@ function renderOvrDetail(name){
   }
   const realSports=Object.keys(ASSIGN).filter(sp=>ovrCurrentSectional(school,sp));
   if(realSports.length){
-    h+=`<h4 style="margin-top:16px;">Sectional assignment</h4>`;
+    h+=`<h4 style="margin-top:16px;">Current-system sectional</h4>`;
     realSports.forEach(sp=>{
       const curSec=ovrCurrentSectional(school,sp);
-      const overrideSec=o.sectional&&o.sectional[sp];
+      const overrideSec=o.sectional&&o.sectional[sp]&&o.sectional[sp].Current;
       h+=`<div class="hostpick">
         <label>${SPORTS[sp]||sp}</label>
-        <select id="ovrSec_${sp}">
+        <select id="ovrSecCur_${sp}">
           ${ASSIGN[sp].map(g=>`<option value="${g.name.replace(/"/g,"&quot;")}"${(overrideSec||curSec)===g.name?" selected":""}>${g.name}</option>`).join("")}
         </select>
         <span class="fieldnote" style="margin-left:auto;">actual: ${curSec}${overrideSec?' <span class="hostnote">(moved)</span>':""}</span>
       </div>`;
     });
   }
+  // Proposed-side move: tied to the sport/class currently selected up top, since
+  // that's what determines the Public/Private path names available to move into.
+  const curSp=$("sport").value, curKl=$("klass").value;
+  let propNames=[], propInField=false;
+  if(effectiveClass(school,curSp)===curKl){
+    propInField=true;
+    const curP=+$("privpaths").value;
+    const fieldNow=DATA.filter(d=>effectiveClass(d,curSp)===curKl);
+    const hasPriv=fieldNow.some(d=>d.p);
+    for(let i=1;i<=Math.max(0,8-curP);i++) propNames.push(`Public path ${i}`);
+    if(hasPriv) for(let i=1;i<=curP;i++) propNames.push(`Private path ${i}`);
+  }
+  if(propInField){
+    const overrideProp=o.sectional&&o.sectional[curSp]&&o.sectional[curSp].Proposed;
+    h+=`<h4 style="margin-top:16px;">Proposed-system path (${SPORTS[curSp]||curSp} / ${curKl}, from the controls above)</h4>
+      <div class="hostpick">
+        <label>Move to</label>
+        <select id="ovrSecProp">
+          <option value="">Natural placement</option>
+          ${propNames.map(n=>`<option value="${n}"${overrideProp===n?" selected":""}>${n}</option>`).join("")}
+        </select>
+        ${overrideProp?'<span class="hostnote">(moved)</span>':""}
+      </div>`;
+  }
   el.innerHTML=h;
 
-  const enInput=$("ovrEnInput"), multCheck=$("ovrMultCheck"), resetBtn=$("ovrEnReset");
+  const enInput=$("ovrEnInput"), resetBtn=$("ovrEnReset");
   if(enInput) enInput.onchange=()=>{
     const v=parseFloat(enInput.value);
     const ov=overrides[name]||(overrides[name]={});
     if(isNaN(v)) delete ov.en; else ov.en=v;
     pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
   };
-  if(multCheck) multCheck.onchange=()=>{
-    const ov=overrides[name]||(overrides[name]={});
-    ov.mult=multCheck.checked;
-    pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
-  };
   if(resetBtn) resetBtn.onclick=()=>{
     const ov=overrides[name];
-    if(ov){ delete ov.en; delete ov.mult; pruneOvr(name); }
+    if(ov){ delete ov.en; pruneOvr(name); }
     saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
   };
+  el.querySelectorAll(".ovrMultSport").forEach(cb=>{
+    cb.onchange=()=>{
+      const sp=cb.dataset.sport;
+      const ov=overrides[name]||(overrides[name]={});
+      ov.mult=ov.mult||{};
+      if(cb.checked) ov.mult[sp]=true; else delete ov.mult[sp];
+      pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+    };
+  });
+  el.querySelectorAll(".ovrSuccessSport").forEach(cb=>{
+    cb.onchange=()=>{
+      const sp=cb.dataset.sport;
+      const ov=overrides[name]||(overrides[name]={});
+      ov.success=ov.success||{};
+      if(cb.checked) ov.success[sp]=true; else delete ov.success[sp];
+      pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+    };
+  });
   realSports.forEach(sp=>{
-    const sel=$("ovrSec_"+sp);
+    const sel=$("ovrSecCur_"+sp);
     if(!sel) return;
     sel.onchange=()=>{
       const curSec=ovrCurrentSectional(school,sp);
       const ov=overrides[name]||(overrides[name]={});
-      if(sel.value===curSec){ if(ov.sectional) delete ov.sectional[sp]; }
-      else{ ov.sectional=ov.sectional||{}; ov.sectional[sp]=sel.value; }
+      ov.sectional=ov.sectional||{}; ov.sectional[sp]=ov.sectional[sp]||{};
+      if(sel.value===curSec){ delete ov.sectional[sp].Current; }
+      else{ ov.sectional[sp].Current=sel.value; }
       pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
     };
   });
+  const propSel=$("ovrSecProp");
+  if(propSel) propSel.onchange=()=>{
+    const ov=overrides[name]||(overrides[name]={});
+    ov.sectional=ov.sectional||{}; ov.sectional[curSp]=ov.sectional[curSp]||{};
+    if(propSel.value){ ov.sectional[curSp].Proposed=propSel.value; }
+    else{ delete ov.sectional[curSp].Proposed; }
+    pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
+  };
 }
 
 $("ovrGo").onclick=()=>{

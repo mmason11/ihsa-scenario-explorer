@@ -41,19 +41,31 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   modeled (recursive geographic bisection) elsewhere. Proposed side is always modeled:
   publics get (8−P) sectional paths, privates get P; P recommended = round(8 × private share), 1–4.
 - Travel = one-way straight-line miles to the host site (named IHSA host where actual,
-  else most-central member school; per-sectional host overrides supported in the UI,
-  including custom venues by lat/lon). Locations are city-level ZIP centroids —
-  Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
+  else most-central member school; per-sectional host overrides supported in the UI on
+  both the Current and Proposed maps — to another member, any IHSA school, or a custom
+  venue by street address, geocoded client-side via OpenStreetMap Nominatim). Locations
+  are city-level ZIP centroids — Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
 - **Scenario Overrides tab** (in-browser only, `localStorage`, not part of the committed
-  data). Two levers, both feeding live into the Scenario Explorer and Full Data tabs:
-  - Per school: override enrollment and/or apply the 1.65× success multiplier (reclassifies
-    that school only), or manually move it to a different actual sectional
-    (FLGG/LAXB/LAXG/VBB/WPB/WPG).
+  data). Three levers, all feeding live into the Scenario Explorer and Full Data tabs:
+  - Per school, per sport: override enrollment; toggle the 1.65× multiplier (private
+    schools only — applies by default to every private program unless waived, so this
+    is a "what if waived/not waived" toggle, not an "is this school private" one); toggle
+    the success factor (a direct one-class bump, e.g. 2A→3A, for a program that reached
+    the state final 4 twice in the rolling three seasons before the one in question —
+    public or private, independent of enrollment). Both toggles are manual stand-ins:
+    neither is computed automatically because that needs Final-4/state-trophy history
+    this tool doesn't have yet (same data gap as the football simulator below).
   - Per sport: edit a class's max-enrollment cutoff to reclassify every school in that sport
     at once. Cutoffs are IHSA's official published values (`CLASS_CUTOFFS` in `template.html`,
     current one-year cycle per ihsa.org/Schools/Enrollments-Classifications) for the 7 sports
     this tool classifies by enrollment (BA/BKB/BKG/SBG/VBG/SOB/SOG); doesn't account for co-op
     programs, which classify on combined enrollment rather than any one member's own figure.
+  - Per school, per sport: manually move it to a different sectional — on the Current map for
+    the 6 actual-assignment sports (FLGG/LAXB/LAXG/VBB/WPB/WPG), or on the Proposed map for
+    whichever sport+class is currently selected in the top controls (Public/Private path
+    names depend on that selection). Sectional-level only — regionals are recomputed
+    geographically every run with no persistent identity, so there's no stable "regional N"
+    to move a school into.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
