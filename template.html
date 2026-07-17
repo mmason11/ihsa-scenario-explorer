@@ -240,6 +240,8 @@
       one.</div>
     <div class="datatools">
       <input type="search" id="schoolsSearch" placeholder="Filter by school…">
+      <select id="schoolsTypeFilter"><option value="">All types</option><option value="1">Private</option><option value="0">Public</option></select>
+      <select id="schoolsClassFilter"><option value="">All classes</option></select>
       <span class="count" id="schoolsCount"></span>
       <button id="schoolsDl" style="margin-left:auto">Download CSV</button>
     </div>
@@ -1099,7 +1101,7 @@ function renderDataTable(){
 // success-factor toggles that write into the same `overrides` used everywhere else.
 let schoolsSort={key:"school",dir:1};
 const SCOLS=[
-  ["school","School",false],["type","Type",false],["en","Enrollment",true],
+  ["school","School",false],["type","Type",false],["en","Enrollment",true],["adjEn","Adjusted enrollment",true],
   ["cls","Class",false],["mult","1.65× multiplier",false],["success","Success factor",false]];
 
 function schoolsRows(){
@@ -1108,6 +1110,7 @@ function schoolsRows(){
     const o=overrides[d.n];
     return {
       school:d.n, priv:d.p, type:d.p?"Private":"Public", en:d.en,
+      adjEn:effectiveEnrollment(d,sp),
       cls:effectiveClass(d,sp), baseCls:d.c[sp],
       multEligible:d.p&&!!CLASS_CUTOFFS[sp],
       multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:d.p,
@@ -1116,12 +1119,25 @@ function schoolsRows(){
   });
 }
 
+function fillSchoolsClassFilter(rows){
+  const sel=$("schoolsClassFilter");
+  const cur=sel.value;
+  const classes=[...new Set(rows.map(r=>r.cls))].sort();
+  sel.innerHTML=`<option value="">All classes</option>`+
+    classes.map(c=>`<option value="${c}"${c===cur?" selected":""}>${c==="S"?"Single class":c}</option>`).join("");
+  if(![...sel.options].some(o=>o.value===cur)) sel.value="";
+}
+
 function renderSchoolsTable(){
   const sp=$("sport").value;
   $("schoolsSportLabel").textContent=SPORTS[sp]||sp;
   const all=schoolsRows();
+  fillSchoolsClassFilter(all);
   const q=($("schoolsSearch").value||"").toLowerCase();
-  let rows=all.filter(r=>!q||r.school.toLowerCase().includes(q));
+  const typeF=$("schoolsTypeFilter").value, clsF=$("schoolsClassFilter").value;
+  let rows=all.filter(r=>(!q||r.school.toLowerCase().includes(q))
+    &&(!typeF||(typeF==="1"?r.priv:!r.priv))
+    &&(!clsF||r.cls===clsF));
   const k=schoolsSort.key, dir=schoolsSort.dir;
   rows=[...rows].sort((a,b)=>{
     const x=a[k],y=b[k];
@@ -1137,10 +1153,12 @@ function renderSchoolsTable(){
   }).join("")+"</tr>";
   rows.forEach(r=>{
     const changed=r.cls!==r.baseCls;
+    const enChanged=r.adjEn!=null&&r.en!=null&&r.adjEn!==r.en;
     const esc=r.school.replace(/"/g,"&quot;");
     h+=`<tr><td style="text-align:left">${r.school}${r.priv?'<span class="privtag">PRIVATE</span>':""}</td>
       <td style="text-align:left">${r.type}</td>
       <td>${r.en!=null?r.en:"—"}</td>
+      <td>${r.adjEn!=null?r.adjEn.toFixed(1):"—"}${enChanged?' <span class="fieldnote">(×1.65)</span>':""}</td>
       <td>${r.cls==="S"?"Single class":r.cls}${changed?" <strong>(changed)</strong>":""}</td>
       <td>${r.multEligible?`<input type="checkbox" class="schMult" data-school="${esc}"${r.multOn?" checked":""}>`:"—"}</td>
       <td>${r.successEligible?`<input type="checkbox" class="schSuccess" data-school="${esc}"${r.successOn?" checked":""}>`:"—"}</td></tr>`;
@@ -1179,9 +1197,10 @@ function renderSchoolsTable(){
 
 function downloadSchoolsCSV(){
   const sp=$("sport").value;
-  const head="school,type,enrollment,class,base_class,multiplier,success_factor\n";
+  const head="school,type,enrollment,adjusted_enrollment,class,base_class,multiplier,success_factor\n";
   const body=schoolsRows().map(r=>[JSON.stringify(r.school),r.type,r.en!=null?r.en:"",
-    JSON.stringify(r.cls),JSON.stringify(r.baseCls),r.multOn,r.successOn].join(",")).join("\n");
+    r.adjEn!=null?r.adjEn.toFixed(1):"",JSON.stringify(r.cls),JSON.stringify(r.baseCls),
+    r.multOn,r.successOn].join(",")).join("\n");
   const a=document.createElement("a");
   a.href=URL.createObjectURL(new Blob([head+body],{type:"text/csv"}));
   a.download=`ihsa_${sp}_schools.csv`; a.click();
@@ -1202,6 +1221,8 @@ $("dl").onclick=downloadCSV;
 $("dl2").onclick=downloadCSV;
 $("dataSearch").oninput=renderDataTable;
 $("schoolsSearch").oninput=renderSchoolsTable;
+$("schoolsTypeFilter").onchange=renderSchoolsTable;
+$("schoolsClassFilter").onchange=renderSchoolsTable;
 $("schoolsDl").onclick=downloadSchoolsCSV;
 const TABS={Scenario:["tabScenario","viewScenario"],Data:["tabData","viewData"],
   Overrides:["tabOverrides","viewOverrides"],Schools:["tabSchools","viewSchools"]};

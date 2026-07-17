@@ -86,9 +86,10 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
     are recomputed geographically every run with no persistent identity, so there's no stable
     "regional N" to move a school into.
 - **Schools tab**: every school with a class in the sport picked up top (all classes at once,
-  not filtered by the Class control) — enrollment, public/private, effective class, and inline
-  1.65× multiplier / success-factor checkboxes that write into the same overrides as the
-  Scenario Overrides tab. Sortable/searchable/CSV, same pattern as Full Data.
+  not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/override,
+  via `effectiveEnrollment`), public/private, effective class, and inline 1.65× multiplier /
+  success-factor checkboxes that write into the same overrides as the Scenario Overrides tab.
+  Filterable by type and class, sortable/searchable/CSV, same pattern as Full Data.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
