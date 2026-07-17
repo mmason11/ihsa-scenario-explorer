@@ -1,5 +1,7 @@
 NEW    Chicago (Kelvyn Park) (geocoded Chicago: 41.85452758620689,-87.67469195402299)
 NEW    Elgin (Harvest-Westminster) (geocoded Elgin: 42.035624999999996,-88.308775)
+NEW    Savanna (West Carroll) (geocoded Savanna: 42.0956,-90.1401)
+NEW    Forsyth (Decatur Christian) (geocoded Forsyth: 39.9248,-88.9691)
 NEW    Mackinaw (Deer Creek) (geocoded Mackinaw: 40.5396,-89.3458)
 NEW    Gibson City (Melvin-Sibley) (geocoded Gibson City: 40.4659,-88.3609)
 NEW    El Paso (Gridley) (geocoded El Paso: 40.7389,-89.012)

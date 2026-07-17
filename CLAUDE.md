@@ -20,19 +20,23 @@ current system.
 - `prepare_data.py` — reads `source_data/IHSA_private_schools.xlsx`, normalizes
   public/private status, geocodes schools by city (offline `zipcodes` package),
   writes `schools_master.csv`.
-- `new_sports.py` — actual IHSA sectional assignments transcribed from ihsa.org for
-  FLGG, LAXB, LAXG, VBB, WPB, WPG (single flat sectional list each — these are single-
-  class sports), SOB (a class→sectional-list dict, since boys soccer has 3 independent
-  classes each with their own ~8 sectionals — see below), plus 2025 football playoff
-  qualifiers by class (football currently removed from the UI; kept for the planned
-  historical simulator). Transcribed straight from ihsa.org's raw HTML bracket pages
-  (`ihsa.org/data/{sport}/{class}pair.htm`) via regex, not WebFetch — WebFetch's small-
-  model summarization drops the actual team rosters in favor of a results narrative
-  (final scores, sectional champions), which is useless for reconstructing "who's in
-  this sectional." The raw HTML is plain and reliable: `<H3>`/`<H4>` tags delimit
-  Sectional/Regional sections, "Match N: TeamA s, TeamB s" lines name every team that
-  played (winner or not) — every team appearing anywhere in a sectional's bracket is a
-  member of it.
+- `new_sports.py` — actual IHSA sectional assignments transcribed from ihsa.org for every
+  sport the tool tracks: FLGG, LAXB, LAXG, VBB, WPB, WPG (single flat sectional list each —
+  these are single-class sports) and SOB/SOG/VBG/BKB/BKG/BA/SBG (a class→sectional-list dict
+  each, since these are multi-class — each class has its own independent ~8 sectionals —
+  see below), plus 2025 football playoff qualifiers by class (football currently removed
+  from the UI; kept for the planned historical simulator). Transcribed straight from
+  ihsa.org's raw HTML bracket pages (`ihsa.org/data/{sport}/{class}pair.htm`) via regex, not
+  WebFetch — WebFetch's small-model summarization drops the actual team rosters in favor of
+  a results narrative (final scores, sectional champions), which is useless for
+  reconstructing "who's in this sectional." The raw HTML is plain and reliable: `<H3>`/`<H4>`
+  tags delimit Sectional/Regional sections, and result lines name every team that played
+  (winner or not) — every team appearing anywhere in a sectional's bracket is a member of
+  it. Two result-line formats: "Match/Game N: TeamA s, TeamB s" (soccer/basketball/baseball/
+  softball) and volleyball's "Match N: TeamA d. TeamB, set-scores" — see `parse_pairings.py`.
+- `parse_pairings.py` — parses a saved bracket page into `new_sports.py`'s `ASSIGNMENTS` shape.
+  Not part of the main pipeline; a standalone tool re-run when a new season's pairings post
+  (usage/fetch command in its docstring).
 - `build_v2.py` — matches assignment rosters to the master list, geocodes strays,
   emits `schools_data.json`.
 - `scenario_engine.py` — Python mirror of the in-page grouping/travel logic.
@@ -47,16 +51,19 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 
 ## Key modeling notes
 - Sports: SOB SOG VBG VBB BKB BKG BA SBG FLGG LAXB LAXG WPB WPG (cheer/dance/football removed).
-- Current-system groupings are ACTUAL IHSA sectionals for FLGG/LAXB/LAXG/VBB/WPB/WPG (single-
-  class) and SOB (all 3 classes — added as a pilot for backfilling the rest); still modeled
-  (recursive geographic bisection) for SOG/VBG/BKB/BKG/BA/SBG. `template.html`'s `realGroups(sport,
-  class)` is the one place that reads `ASSIGN[sport]`, normalizing the two shapes (flat list for
-  single-class, `{class: list}` dict for multi-class) — use it rather than touching `ASSIGN`
-  directly. Real data has a coverage caveat vs. the classification-based field: e.g. for SOB/1A,
-  12 schools classified 1A didn't field a team in the 2025 bracket (real participation varies
-  year to year) and 2 schools played without a recorded SOB class — both fall out of the Current-
-  side comparison in Full Data, which is expected, not a bug (confirmed by checking each one's
-  `SOB` column in `schools_master.csv` directly). Proposed side is always modeled: publics get
+- Current-system groupings are ACTUAL IHSA sectionals for every sport the tool tracks — no
+  sport falls back to modeled (recursive geographic bisection) grouping anymore, though the
+  fallback code path still exists in `template.html`'s `realGroups(sport, class)` (the one
+  place that reads `ASSIGN[sport]`, normalizing the two shapes: flat list for the 6 single-
+  class sports FLGG/LAXB/LAXG/VBB/WPB/WPG, `{class: list}` dict for the 7 multi-class sports
+  SOB/SOG/VBG/BKB/BKG/BA/SBG — use it rather than touching `ASSIGN` directly) in case a future
+  sport needs it. Real data has a coverage caveat vs. the classification-based field: e.g. for
+  SOB/1A, 12 schools classified 1A didn't field a team in the 2025 bracket (real participation
+  varies year to year) and 2 schools played without a recorded SOB class — both fall out of
+  the Current-side comparison in Full Data, which is expected, not a bug (confirmed by
+  checking each one's `SOB` column in `schools_master.csv` directly; similar small gaps exist
+  for the other 6 sports — see `new_sports.py`'s docstring for exact counts). Proposed side is
+  always modeled by design (that's the whole point of the proposal): publics get
   (8−P) sectional paths, privates get P; P recommended = round(8 × private share), 1–4.
 - Travel = one-way straight-line miles to the host site (named IHSA host where actual,
   else most-central member school; per-sectional host overrides supported in the UI on
@@ -95,9 +102,9 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:
    see `template.html` / `schools_data.json` / `build_site.py` above.
 2. ~~Resolve the 29 review-list schools.~~ Done: see `REVIEW_RESOLUTIONS` in `prepare_data.py`.
-3. Backfill real sectionals for the remaining modeled sports (SOG/VBG/BKB/BKG/BA/SBG — SOB
-   done as a pilot, see above). 6 sports × 3-4 classes ≈ 18 more `{sport}/{class}pair.htm`
-   pages to fetch and parse the same way; ~26 total across all 7 was the original estimate.
+3. ~~Backfill real sectionals for the remaining modeled sports.~~ Done: SOG/VBG/BKB/BKG/BA/SBG
+   all transcribed the same way as the SOB pilot — every sport the tool tracks now uses real
+   IHSA data. See `new_sports.py`'s docstring and `parse_pairings.py`.
 4. Football historical simulator under the NEW playoff rules (8 classes of 32;
    1A–6A split into two 16-team brackets, 7A–8A seeded 1–32; seeding by record +
    at-large points; tiebreakers: most wins of defeated opponents, then head-to-head;
