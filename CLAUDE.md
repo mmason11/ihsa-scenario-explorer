@@ -71,32 +71,37 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   venue by street address, geocoded client-side via OpenStreetMap Nominatim). Locations
   are city-level ZIP centroids — Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
 - **Scenario Overrides tab** (in-browser only, `localStorage`, not part of the committed
-  data). Three levers, all feeding live into the Scenario Explorer and Full Data tabs:
-  - Per school, per sport: override enrollment; toggle the 1.65× multiplier (private
-    schools only — applies by default to every private program unless waived, so this
-    is a "what if waived/not waived" toggle, not an "is this school private" one); toggle
-    the success factor (a direct one-class bump, e.g. 2A→3A, for a program that reached
-    the state final 4 twice in the rolling three seasons before the one in question —
-    public or private, independent of enrollment). Both toggles are manual stand-ins:
-    neither is computed automatically because that needs Final-4/state-trophy history
-    this tool doesn't have yet (same data gap as the football simulator below).
-  - Per sport: edit a class's max-enrollment cutoff to reclassify every school in that sport
-    at once. Cutoffs are IHSA's official published values (`CLASS_CUTOFFS` in `template.html`,
-    current one-year cycle per ihsa.org/Schools/Enrollments-Classifications) for the 7 sports
-    this tool classifies by enrollment (BA/BKB/BKG/SBG/VBG/SOB/SOG); doesn't account for co-op
-    programs, which classify on combined enrollment rather than any one member's own figure.
-  - Per school, per sport: manually move it to a different sectional — both Current and
-    Proposed, tied to whichever sport+class is currently selected in the top controls (that's
-    what determines the available target names). Current uses real sectional names where we
-    have them (SOB + the 6 single-class sports) or "Sectional N" to match the modeled split
-    otherwise; Proposed always uses "Public/Private path N". Sectional-level only — regionals
-    are recomputed geographically every run with no persistent identity, so there's no stable
-    "regional N" to move a school into.
+  data). Two per-school, per-sport levers, feeding live into the Scenario Explorer and Full
+  Data tabs: override enrollment; toggle the 1.65× multiplier (private schools only —
+  applies by default to every private program unless waived, so this is a "what if waived/
+  not waived" toggle, not an "is this school private" one, and is distinct from the global
+  multiplier *value* lever on the Schools tab below); toggle the success factor (a direct
+  one-class bump, e.g. 2A→3A, for a program that reached the state final 4 twice in the
+  rolling three seasons before the one in question — public or private, independent of
+  enrollment). Both toggles are manual stand-ins where history isn't loaded yet. Also:
+  manually move a school to a different
+  sectional — both Current and Proposed, tied to whichever sport+class is currently selected
+  in the top controls (that's what determines the available target names). Current uses real
+  sectional names where we have them (every sport now — see above) or "Sectional N" as a
+  fallback if a future sport lacks real data; Proposed always uses "Public/Private path N".
+  Sectional-level only — regionals are recomputed geographically every run with no persistent
+  identity, so there's no stable "regional N" to move a school into.
 - **Schools tab**: every school with a class in the sport picked up top (all classes at once,
-  not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/override,
-  via `effectiveEnrollment`), public/private, effective class, and inline 1.65× multiplier /
+  not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/
+  override, via `effectiveEnrollment`), public/private, effective class, and inline multiplier/
   success-factor checkboxes that write into the same overrides as the Scenario Overrides tab.
-  Filterable by type and class, sortable/searchable/CSV, same pattern as Full Data.
+  Filterable by type and class, sortable/searchable/CSV, same pattern as Full Data. Also hosts
+  two sport-wide/tool-wide levers (moved here from Scenario Overrides since they aren't
+  per-school): a classification-cutoff editor (slider + number input per class boundary,
+  reclassifying the whole field for the selected sport at once) and a multiplier-*value*
+  editor (slider + number input, default 1.65×, changes the multiplier itself — not just
+  who's waived — across every private school/sport at once, e.g. "what would 1.5× or 2× do
+  instead"). Both are official-values-per-sport (`CLASS_CUTOFFS`, current one-year cycle per
+  ihsa.org/Schools/Enrollments-Classifications, for the 7 sports this tool classifies by
+  enrollment: BA/BKB/BKG/SBG/VBG/SOB/SOG) unless overridden; doesn't account for co-op
+  programs, which classify on combined enrollment rather than any one member's own figure.
+  A class summary table (schools/public/private per class, using effective class) rounds
+  out the tab, all driven by the same sport picker in the top controls.
 
 ## Planned next steps
 1. ~~Rebuild index.html as template + data build script instead of one embedded file.~~ Done:

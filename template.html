@@ -201,18 +201,9 @@
       private, independent of enrollment. Doesn't account for co-op programs, which classify on their combined
       enrollment rather than any one member's own figure. A Proposed-system move is only offered while the school
       is in the sport/class field currently selected above (that's what determines the Public/Private path names
-      available). Overrides live only in this browser (not saved/shared).</div>
-
-    <h3 style="margin-top:26px;">Classification cutoffs</h3>
-    <div class="tblnote">Edit a class's max-enrollment boundary to reclassify every school in that sport at
-      once — e.g. raise 1A's ceiling and see who moves into it. The top class is always "and over" and isn't
-      editable. This changes the whole field, on top of (and combined with) any per-school enrollment override below.</div>
-    <div class="hostpick" style="margin-bottom:18px;">
-      <label>Sport</label>
-      <select id="cutoffSportPick"></select>
-      <span id="cutoffResetWrap"></span>
-    </div>
-    <div id="cutoffInputs"></div>
+      available). Overrides live only in this browser (not saved/shared). Classification cutoffs and the
+      multiplier value itself are edited from the Schools tab, since those apply sport-wide (or tool-wide) rather
+      than to one school.</div>
 
     <h3 style="margin-top:26px;">Per-school overrides</h3>
     <div class="hostpick" style="margin-bottom:18px;">
@@ -233,11 +224,29 @@
   <div id="viewSchools" style="display:none">
     <h3>Schools — <span id="schoolsSportLabel"></span></h3>
     <div class="tblnote">Every school with a class in the sport selected above (all classes, not just the one
-      picked in Class), with enrollment, public/private status, and the 1.65&times; multiplier / success-factor
-      toggles from Scenario Overrides — editable right here. Success factor tracks a program's state final-4
-      appearances (see Scenario Overrides for the rolling-three-year rule); once past results are on file this
-      can compute it instead of being a manual toggle. Change the sport in the controls above to see a different
-      one.</div>
+      picked in Class), with enrollment, public/private status, and the multiplier / success-factor toggles from
+      Scenario Overrides — editable right here. Success factor tracks a program's state final-4 appearances (see
+      Scenario Overrides for the rolling-three-year rule); once past results are on file this can compute it
+      instead of being a manual toggle. Change the sport in the controls above to see a different one.</div>
+
+    <div id="schoolsCutoffSection">
+      <h4 style="margin-top:10px;">Classification cutoffs</h4>
+      <div class="tblnote">Drag or type a class's max-enrollment boundary to reclassify every school in the
+        sport selected above at once — e.g. raise 1A's ceiling and see who moves into it. The top class is
+        always "and over" and isn't editable.</div>
+      <div id="cutoffInputs"></div>
+    </div>
+
+    <h4 style="margin-top:20px;">Private-school multiplier</h4>
+    <div class="tblnote">The official multiplier is 1.65&times;, applied by default to every private program
+      (waivable per school/sport in Scenario Overrides). Changing it here models a different policy value across
+      every sport and school at once — e.g. what would 1.5&times; or 2&times; do to classifications overall.</div>
+    <div id="multiplierInputs"></div>
+
+    <h4 style="margin-top:20px;">Class summary — <span id="classSummarySportLabel"></span></h4>
+    <table class="stats" id="classSummaryTable"></table>
+
+    <h4 style="margin-top:20px;">School list</h4>
     <div class="datatools">
       <input type="search" id="schoolsSearch" placeholder="Filter by school…">
       <select id="schoolsTypeFilter"><option value="">All types</option><option value="1">Private</option><option value="0">Public</option></select>
@@ -330,7 +339,7 @@ function effectiveEnrollment(school,sport){
   // from "no override yet" — both would otherwise look like a falsy mult[sport].
   const explicit=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport)?o.mult[sport]:null;
   const multOn=explicit!=null?explicit:school.p;
-  return multOn?base*1.65:base;
+  return multOn?base*multiplierValue:base;
 }
 function bumpClass(sport,cls){
   const table=effectiveCutoffs(sport);
@@ -362,6 +371,18 @@ try{
   Object.values(cutoffOverrides).forEach(rows=>{ if(rows.length) rows[rows.length-1][1]=Infinity; });
 }catch(e){ cutoffOverrides={}; }
 function saveCutoffOverrides(){ try{ localStorage.setItem(CUTOFF_KEY,JSON.stringify(cutoffOverrides)); }catch(e){} }
+
+// Global "what if the official multiplier were a different value" lever — applies to
+// every private school/sport at once, on top of (and independent from) the per-school/
+// per-sport waiver toggle in Scenario Overrides.
+const OFFICIAL_MULTIPLIER=1.65;
+const MULT_KEY="ihsa_multiplier_value_v1";
+let multiplierValue=OFFICIAL_MULTIPLIER;
+try{
+  const stored=parseFloat(localStorage.getItem(MULT_KEY));
+  if(!isNaN(stored)&&stored>0) multiplierValue=stored;
+}catch(e){}
+function saveMultiplierValue(){ try{ localStorage.setItem(MULT_KEY,String(multiplierValue)); }catch(e){} }
 function effectiveCutoffs(sport){ return cutoffOverrides[sport]||CLASS_CUTOFFS[sport]; }
 function predictClass(sport,en,fallback){
   if(en==null) return fallback;
@@ -374,12 +395,14 @@ function effectiveClass(school,sport){
   const base=school.c[sport];
   if(!base||base==="S"||!CLASS_CUTOFFS[sport]) return base;
   const o=overrides[school.n];
-  // Recompute only on an explicit change (enrollment override, or an explicit waiver
-  // toggle) — the multiplier defaulting on for private schools shouldn't by itself
-  // recompute anything, since the transcribed base class already reflects reality.
+  // Recompute only on an explicit change (enrollment override, explicit waiver toggle,
+  // a sport-wide cutoff edit, or a global multiplier change) — the multiplier defaulting
+  // on for private schools shouldn't by itself recompute anything, since the transcribed
+  // base class already reflects reality.
   const explicitMult=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport);
   const hasEnOverride=o&&(o.en!=null||explicitMult);
-  let cls=(hasEnOverride||cutoffOverrides[sport])?predictClass(sport,effectiveEnrollment(school,sport),base):base;
+  const globalMultChanged=school.p&&multiplierValue!==OFFICIAL_MULTIPLIER;
+  let cls=(hasEnOverride||cutoffOverrides[sport]||globalMultChanged)?predictClass(sport,effectiveEnrollment(school,sport),base):base;
   if(o&&o.success&&o.success[sport]) cls=bumpClass(sport,cls);
   return cls;
 }
@@ -787,6 +810,9 @@ function run(){
   });
   lastDetail=detail;
   renderDataTable();
+  renderCutoffEditor();
+  renderMultiplierEditor();
+  renderClassSummary();
   renderSchoolsTable();
   const worst=[...detail].sort((a,b)=>b.dSec-a.dSec).slice(0,12);
   let w=`<tr><th>School</th><th>Regional (now)</th><th>Sectional (now)</th>
@@ -824,44 +850,119 @@ function fillClasses(){
   };
 });
 
-// ---- scenario overrides tab
+// ---- cutoff editor + multiplier lever (Schools tab, both follow the main sport picker
+// for the cutoff editor; multiplier is tool-wide, not sport-specific)
 function renderCutoffEditor(){
-  const sports=Object.keys(CLASS_CUTOFFS);
-  const sel=$("cutoffSportPick");
-  if(!sel.options.length){
-    sel.innerHTML=sports.map(sp=>`<option value="${sp}">${SPORTS[sp]||sp}</option>`).join("");
+  const sp=$("sport").value;
+  const container=$("cutoffInputs");
+  if(!CLASS_CUTOFFS[sp]){
+    container.innerHTML=`<div class="dmeta">${SPORTS[sp]||sp} isn't classified by enrollment — no cutoffs to edit.</div>`;
+    return;
   }
-  const sp=sel.value||sports[0];
   const table=effectiveCutoffs(sp), official=CLASS_CUTOFFS[sp];
   const overridden=!!cutoffOverrides[sp];
-  $("cutoffResetWrap").innerHTML=overridden?'<button id="cutoffReset">Reset to official</button>':"";
   let h=`<table><tr><th>Class</th><th>Max enrollment</th></tr>`;
   table.forEach(([k,max],i)=>{
     const isTop=i===table.length-1;
-    h+=`<tr><td>${k}</td><td>${isTop?"and over":
-      `<input type="number" min="1" step="1" class="cutoffInput" data-idx="${i}" value="${max}" style="width:90px;">`}</td></tr>`;
+    if(isTop){
+      h+=`<tr><td>${k}</td><td>and over</td></tr>`;
+    }else{
+      const sliderMax=Math.max(official[i][1]*3,100);
+      h+=`<tr><td>${k}</td><td>
+        <input type="range" min="1" max="${sliderMax}" step="1" class="cutoffSlider" data-idx="${i}" value="${max}">
+        <input type="number" min="1" step="1" class="cutoffInput" data-idx="${i}" value="${max}" style="width:85px;">
+      </td></tr>`;
+    }
   });
   h+="</table>";
-  $("cutoffInputs").innerHTML=h;
-  $("cutoffInputs").querySelectorAll(".cutoffInput").forEach(inp=>{
+  h+=overridden?'<div class="btnrow"><button id="cutoffReset">Reset to official</button></div>':"";
+  container.innerHTML=h;
+
+  const apply=(idx,v)=>{
+    if(isNaN(v)||v<=0) return;
+    const base=(cutoffOverrides[sp]||official).map(row=>[...row]);
+    base[idx][1]=v;
+    cutoffOverrides[sp]=base;
+    saveCutoffOverrides(); run();
+    if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+    renderOvrList();
+  };
+  container.querySelectorAll(".cutoffSlider").forEach(sl=>{
+    const idx=+sl.dataset.idx;
+    const num=container.querySelector(`.cutoffInput[data-idx="${idx}"]`);
+    sl.oninput=()=>{ num.value=sl.value; };
+    sl.onchange=()=>apply(idx,parseFloat(sl.value));
+  });
+  container.querySelectorAll(".cutoffInput").forEach(inp=>{
+    const idx=+inp.dataset.idx;
+    const sl=container.querySelector(`.cutoffSlider[data-idx="${idx}"]`);
     inp.onchange=()=>{
       const v=parseFloat(inp.value);
-      if(isNaN(v)||v<=0) return;
-      const base=(cutoffOverrides[sp]||official).map(row=>[...row]);
-      base[+inp.dataset.idx][1]=v;
-      cutoffOverrides[sp]=base;
-      saveCutoffOverrides(); run(); renderCutoffEditor(); renderOvrList();
-      if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+      if(sl&&!isNaN(v)) sl.value=Math.min(v,+sl.max);
+      apply(idx,v);
     };
   });
   const resetBtn=$("cutoffReset");
   if(resetBtn) resetBtn.onclick=()=>{
     delete cutoffOverrides[sp];
-    saveCutoffOverrides(); run(); renderCutoffEditor(); renderOvrList();
+    saveCutoffOverrides(); run();
     if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+    renderOvrList();
   };
 }
-$("cutoffSportPick").onchange=renderCutoffEditor;
+
+function renderMultiplierEditor(){
+  const container=$("multiplierInputs");
+  const changed=multiplierValue!==OFFICIAL_MULTIPLIER;
+  container.innerHTML=`<div class="hostpick">
+    <label>Multiplier</label>
+    <input type="range" id="multSlider" min="1" max="3" step="0.05" value="${multiplierValue}">
+    <input type="number" id="multNumber" min="0.01" step="0.01" value="${multiplierValue}" style="width:75px;">
+    ${changed?'<button id="multReset">Reset to 1.65×</button>':""}
+  </div>`;
+  const slider=$("multSlider"), num=$("multNumber"), resetBtn=$("multReset");
+  const apply=v=>{
+    if(isNaN(v)||v<=0) return;
+    multiplierValue=v;
+    saveMultiplierValue(); run(); renderMultiplierEditor();
+    if($("ovrPick").value) renderOvrDetail($("ovrPick").value);
+    renderOvrList();
+  };
+  slider.oninput=()=>{ num.value=slider.value; };
+  slider.onchange=()=>apply(parseFloat(slider.value));
+  num.onchange=()=>{
+    const v=parseFloat(num.value);
+    if(!isNaN(v)) slider.value=Math.min(Math.max(v,+slider.min),+slider.max);
+    apply(v);
+  };
+  if(resetBtn) resetBtn.onclick=()=>apply(OFFICIAL_MULTIPLIER);
+}
+
+function renderClassSummary(){
+  const sp=$("sport").value;
+  $("classSummarySportLabel").textContent=SPORTS[sp]||sp;
+  const groups={};
+  DATA.filter(d=>d.c[sp]).forEach(d=>{
+    const cls=effectiveClass(d,sp);
+    const g=groups[cls]||(groups[cls]={total:0,pub:0,priv:0});
+    g.total++; if(d.p) g.priv++; else g.pub++;
+  });
+  const order=Object.keys(groups).sort((a,b)=>{
+    const ai=CLASS_CUTOFFS[sp]?CLASS_CUTOFFS[sp].findIndex(([k])=>k===a):-1;
+    const bi=CLASS_CUTOFFS[sp]?CLASS_CUTOFFS[sp].findIndex(([k])=>k===b):-1;
+    return ai!==-1&&bi!==-1?ai-bi:String(a).localeCompare(String(b));
+  });
+  let h=`<tr><th>Class</th><th>Schools</th><th>Public</th><th>Private</th></tr>`;
+  order.forEach(cls=>{
+    const g=groups[cls];
+    h+=`<tr><td style="text-align:left">${cls==="S"?"Single class":cls}</td><td>${g.total}</td><td>${g.pub}</td><td>${g.priv}</td></tr>`;
+  });
+  const totalAll=Object.values(groups).reduce((s,g)=>s+g.total,0);
+  const totalPub=Object.values(groups).reduce((s,g)=>s+g.pub,0);
+  const totalPriv=Object.values(groups).reduce((s,g)=>s+g.priv,0);
+  h+=`<tr><td style="text-align:left"><strong>Total</strong></td><td><strong>${totalAll}</strong></td><td><strong>${totalPub}</strong></td><td><strong>${totalPriv}</strong></td></tr>`;
+  $("classSummaryTable").innerHTML=h;
+}
 
 function renderOvrList(){
   const names=Object.keys(overrides).filter(n=>overrides[n]&&Object.keys(overrides[n]).length);
@@ -1050,9 +1151,11 @@ $("ovrGo").onclick=()=>{
 };
 $("ovrPick").addEventListener("keydown",e=>{ if(e.key==="Enter") $("ovrGo").click(); });
 $("ovrClearAll").onclick=()=>{
-  if(!Object.keys(overrides).length&&!Object.keys(cutoffOverrides).length) return;
-  if(!confirm("Clear all scenario overrides, including any classification cutoff changes?")) return;
-  overrides={}; cutoffOverrides={}; saveOverrides(); saveCutoffOverrides(); run(); renderOvrList(); renderCutoffEditor();
+  const multChanged=multiplierValue!==OFFICIAL_MULTIPLIER;
+  if(!Object.keys(overrides).length&&!Object.keys(cutoffOverrides).length&&!multChanged) return;
+  if(!confirm("Clear all scenario overrides, including any classification cutoff and multiplier changes?")) return;
+  overrides={}; cutoffOverrides={}; multiplierValue=OFFICIAL_MULTIPLIER;
+  saveOverrides(); saveCutoffOverrides(); saveMultiplierValue(); run(); renderOvrList();
   const cur=$("ovrPick").value; if(byName[cur]) renderOvrDetail(cur);
 };
 
@@ -1243,7 +1346,6 @@ $("klass").onchange=()=>{applyRecommendation();run();};
 $("privpaths").oninput=e=>{$("privpathsval").textContent=e.target.value;run();};
 $("regsize").oninput=e=>{$("regsizeval").textContent=e.target.value;run();};
 $("allschoolsOvr").innerHTML=DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("");
-renderCutoffEditor();
 renderOvrList();
 fillClasses(); applyRecommendation(); run();
 </script>
