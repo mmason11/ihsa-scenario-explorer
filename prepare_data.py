@@ -97,12 +97,13 @@ def parse_enrollment(v):
     'Enrollment' cells hold the base ISBE-derived figure, sometimes with the
     1.65 success-multiplier value in parens, e.g. '48.00 (79.20)' -> 48.0.
     Plain numbers (no multiplier applied) appear as-is, e.g. 236 -> 236.0.
+    Four-digit-plus figures use a thousands comma, e.g. '1,098.00 (1,811.70)'.
     """
     if pd.isna(v):
         return None
     if isinstance(v, (int, float)):
         return float(v)
-    s = str(v).strip()
+    s = str(v).strip().replace(",", "")
     m = re.match(r"^([\d.]+)", s)
     return float(m.group(1)) if m else None
 
