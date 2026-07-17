@@ -130,8 +130,12 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   currently selected in the top controls (that's what determines the available target names).
   Current uses real sectional names where we have them (every sport now — see above) or
   "Sectional N" as a fallback if a future sport lacks real data; Proposed always uses
-  "Public/Private path N". Sectional-level only — regionals are recomputed geographically
-  every run with no persistent identity, so there's no stable "regional N" to move a school
+  "Public/Private path N". Same override, two entry points: the school-search panel here, or
+  a "Move to" dropdown directly in each roster row on the Scenario Explorer tab's sectional
+  detail panel (`renderDetail()`) — added after initial feedback that burying this in a
+  separate tab, away from the map you're actually looking at, wasn't discoverable. Sectional-
+  level only — regionals are recomputed geographically every run with no persistent identity,
+  so there's no stable "regional N" to move a school
   into.
 - **Schools tab**: every school with a class in the sport picked up top (all classes at once,
   not filtered by the Class control) — enrollment, adjusted enrollment (post-multiplier/

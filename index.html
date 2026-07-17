@@ -668,19 +668,38 @@ function renderDetail(which){
       <span id="hostExtra${which}"></span>
       ${ov?`<button id="hostReset${which}">Reset</button>`:""}
     </div>
-    <table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th></tr>`;
+    <table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th><th>Move to</th></tr>`;
   let lastReg=-1;
+  const sp=$("sport").value;
+  const moveOptions=[...new Set(st.rows.map(r=>r.secName))].sort();
   rows.forEach(r=>{
     if(st.reg===null&&r.reg!==lastReg){
-      h+=`<tr class="regrow"><td colspan="3" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
+      h+=`<tr class="regrow"><td colspan="4" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
       lastReg=r.reg;
     }
+    const so=overrides[r.s.n]&&overrides[r.s.n].sectional&&overrides[r.s.n].sectional[sp];
+    const moved=so&&so[which];
+    const esc=r.s.n.replace(/"/g,"&quot;");
     h+=`<tr><td>${r.s.n}${r.s.p?'<span class="privtag">PRIVATE</span>':""}</td>
-      <td class="mi">${r.regMi.toFixed(0)}</td><td class="mi">${r.secMi.toFixed(0)}</td></tr>`;
+      <td class="mi">${r.regMi.toFixed(0)}</td><td class="mi">${r.secMi.toFixed(0)}</td>
+      <td><select class="moveSel" data-school="${esc}">
+        <option value="">Natural placement</option>
+        ${moveOptions.map(n=>`<option value="${n.replace(/"/g,"&quot;")}"${moved===n?" selected":""}>${n}</option>`).join("")}
+      </select>${moved?' <span class="hostnote">(moved)</span>':""}</td></tr>`;
   });
   el.innerHTML=h+"</table>";
   el.querySelectorAll("tr.regrow td").forEach(td=>{
     td.onclick=()=>setSel(which,st.sec,+td.dataset.reg);
+  });
+  el.querySelectorAll(".moveSel").forEach(sel=>{
+    sel.onchange=()=>{
+      const nm=sel.dataset.school;
+      const ov=overrides[nm]||(overrides[nm]={});
+      ov.sectional=ov.sectional||{}; ov.sectional[sp]=ov.sectional[sp]||{};
+      if(!sel.value) delete ov.sectional[sp][which]; else ov.sectional[sp][which]=sel.value;
+      pruneOvr(nm); saveOverrides(); run();
+      if($("ovrPick").value===nm) renderOvrDetail(nm);
+    };
   });
   wireHostPicker(which, st.sec);
 }
