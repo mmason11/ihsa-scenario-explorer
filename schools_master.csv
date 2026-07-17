@@ -97,7 +97,7 @@ Carrollton,Carrollton,public,False,False,0.0,0.0,39.3009,-90.4092,1A,1A,,,,,1A,1
 Carterville,Carterville,public,False,False,0.0,0.0,37.7748,-89.0978,2A,2A,2A,1A,2A,1A,2A,2A,2A,1A,1A,2A,1A,2A,2A,2A,1A,2A,2A
 Carthage (Illini West),Carthage,public,False,False,0.0,0.0,40.4129,-91.1005,1A,1A,1A,1A,,,2A,2A,2A,,1A,1A,1A,2A,2A,,,1A,1A
 Cary (C.-Grove),Cary,public,False,False,0.0,0.0,42.2196,-88.2426,2A,2A,2A,,2A,1A,3A,3A,3A,2A,2A,2A,2A,3A,3A,2A,1A,3A,3A
-Cary (Trinity Oaks Christian Academy),Cary,unclassified,False,True,,,42.2196,-88.2426,,,,,,,1A,1A,,,,,,,,,,,
+Cary (Trinity Oaks Christian Academy),Cary,private,True,False,,,42.2196,-88.2426,,,,,,,1A,1A,,,,,,,,,,,
 Casey (C.-Westfield),Casey,public,False,False,0.0,0.0,39.3017,-87.9913,1A,1A,1A,,,1A,1A,1A,1A,,,1A,,1A,1A,,1A,1A,1A
 Catlin (Salt Fork),Catlin,public,False,False,0.0,0.0,40.0699,-87.7113,,,1A,,,,1A,1A,1A,1A,,1A,,1A,1A,,,1A,1A
 Centralia (Christ Our Rock Lutheran),Centralia,private,True,False,7.0,20.0,38.5241,-89.1365,1A,,1A,,,,1A,1A,,,,,,1A,1A,,,1A,
@@ -110,12 +110,12 @@ Champaign (St. Thomas More),Champaign,private,True,False,5.0,13.0,40.11598333333
 Charleston,Charleston,public,False,False,0.0,0.0,39.4869,-88.1761,2A,2A,2A,1A,2A,1A,3A,3A,3A,C,,2A,2A,3A,3A,1A,1A,2A,2A
 Chatham (Glenwood),Chatham,public,False,False,0.0,0.0,39.6737,-89.7112,2A,2A,2A,2A,2A,1A,3A,3A,3A,,,2A,2A,3A,3A,2A,1A,3A,3A
 Chester,Chester,public,False,False,0.0,0.0,37.9188,-89.8218,1A,1A,1A,1A,,,2A,2A,2A,1A,1A,1A,,2A,2A,,,1A,1A
-Chicago (ACE Amandla Charter),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,,,,,,,,,,,
+Chicago (ACE Amandla Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,,,,,,,,,,,
 Chicago (Acero/Garcia),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,2A,,3A,3A,,,,,,3A,,2A,,2A,2A
 Chicago (Acero/Soto),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,2A,,2A,2A,2A,,,,,,,2A,,,
 Chicago (Agricultural Science),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,2A,,2A,,3A,3A,3A,,,,2A,3A,,2A,,3A,3A
 Chicago (Air Force Academy),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,1A,1A,1A,,,,,1A,,1A,,,
-Chicago (Alcott),Chicago,unclassified,False,True,,,41.85452758620689,-87.67469195402299,,,,,,,2A,,,,,,,,,,,,
+Chicago (Alcott),Chicago,public,False,False,,,41.85452758620689,-87.67469195402299,,,,,,,2A,,,,,,,,,,,,
 Chicago (Amundsen),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,2A,,2A,,3A,3A,3A,2A,,,2A,3A,3A,2A,,3A,3A
 Chicago (ASPIRA/Business and Finance),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,1A,,3A,,,,,,,,,,,,
 Chicago (Austin),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,,,,,,,,,,1A,
@@ -126,12 +126,12 @@ Chicago (Brooks),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620
 Chicago (Brother Rice),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,3A,,3A,,3A,,,4A,,,,2A,3A,4A,,,2A,3A,
 Chicago (C. Academy),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,1A,,2A,2A,2A,,1A,,1A,2A,,1A,,2A,2A
 Chicago (C. Hope Academy),Chicago,private,True,False,1.0,2.0,41.85452758620689,-87.67469195402299,1A,1A,,,1A,,1A,2A,2A,,1A,,1A,2A,2A,1A,,2A,2A
-Chicago (C. Math and Science Charter),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,2A,,,,,,,,,,,2A,2A
+Chicago (C. Math and Science Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,2A,,,,,,,,,,,2A,2A
 Chicago (C. Military Academy-Bronzeville),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,2A,,,,1A,,,,,1A,1A
-Chicago (C. Tech Academy Charter),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,2A,2A
+Chicago (C. Tech Academy Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,2A,2A
 Chicago (C. Vocational),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,3A,3A,,,,,3A,,,,2A,
 Chicago (Carver Military Academy),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,1A,,,1A,,,2A,,,,,,2A,,,,2A,2A
-Chicago (Catalyst/Maria),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,2A,2A,2A,,,,,,,,,2A,2A
+Chicago (Catalyst/Maria),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,2A,2A,2A,,,,,,,,,2A,2A
 Chicago (Christ the King),Chicago,private,True,False,1.0,2.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,2A,1A,,,,,,,,1A,1A
 Chicago (CICS/Ellison),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,1A,1A,,,,,,,,,,,
 Chicago (CICS/Longwood),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,3A,3A,3A,,,,,,,,,2A,2A
@@ -151,20 +151,20 @@ Chicago (Dunbar),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620
 Chicago (DuSable),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,,,1A,,1A,,,,,1A,1A
 Chicago (Dyett),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,2A,,1A,,1A,,,,,2A,2A
 Chicago (Englewood STEM),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,2A,,,,1A,,,1A,,2A,2A
-Chicago (EPIC Academy Charter),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
-Chicago (Excel Academy/Englewood),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
-Chicago (Excel Academy/Roseland),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,,,,,1A,
-Chicago (Excel Academy/South Shore),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
+Chicago (EPIC Academy Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
+Chicago (Excel Academy/Englewood),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
+Chicago (Excel Academy/Roseland),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,,,,,1A,
+Chicago (Excel Academy/South Shore),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
 Chicago (F.W. Parker),Chicago,private,True,False,1.0,1.0,41.85452758620689,-87.67469195402299,1A,1A,2A,1A,1A,1A,2A,2A,2A,,,2A,,2A,2A,1A,1A,2A,2A
 Chicago (Farragut),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,2A,,1A,,1A,1A
 Chicago (Fenger),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,1A,,,,1A,,,,,1A,1A
 Chicago (Foreman),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,2A,2A,2A,,,,1A,,,,,2A,
-Chicago (Gage Park),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,2A,,1A,,1A,
+Chicago (Gage Park),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,2A,,1A,,1A,
 Chicago (Goode STEM Academy),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,2A,,,3A,3A,,,,2A,3A,,2A,,2A,2A
 Chicago (Hancock),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,3A,3A,,,3A,,4A,4A,4A,C,,,3A,3A,3A,2A,,2A,2A
 Chicago (Harlan),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,,,,,,1A,1A,,,,,1A,,,,,,
 Chicago (Holy Trinity),Chicago,private,True,False,1.0,1.0,41.85452758620689,-87.67469195402299,1A,1A,,,1A,,2A,2A,2A,,,,,2A,1A,,,1A,1A
-Chicago (Horizon/Belmont),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,,,,2A,,1A,,,,,,,,1A,1A
+Chicago (Horizon/Belmont),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,,,,2A,,1A,,,,,,,,1A,1A
 Chicago (Horizon/McKinley),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,1A,,1A,1A,1A,,,,,1A,2A,,,1A,1A
 Chicago (Horizon/Southwest Chicago),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,1A,,,1A,,1A,1A,1A,,,,1A,,,1A,,1A,1A
 Chicago (Hubbard),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,2A,,3A,,,,,,2A,3A,,2A,,3A,3A
@@ -183,12 +183,12 @@ Chicago (King),Chicago,public_nonboundaried,False,False,0.0,0.0,41.8545275862068
 Chicago (Lake View),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,2A,,3A,3A,3A,,,,2A,3A,,2A,,3A,3A
 Chicago (Lane),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,,3A,4A,4A,3A,2A,3A,3A
 Chicago (Latin),Chicago,private,True,False,1.0,1.0,41.85452758620689,-87.67469195402299,2A,2A,2A,1A,2A,1A,3A,3A,3A,,,,,3A,2A,2A,1A,2A,2A
-Chicago (Legal Prep Charter),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
+Chicago (Legal Prep Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,,
 Chicago (Leo),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,1A,,,,,,,3A,,,,2A,1A,3A,,,,2A,
 Chicago (Lincoln Park),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,2A,4A,4A,4A,C,3A,,3A,4A,4A,3A,2A,3A,3A
 Chicago (Lindblom),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,,4A,4A,4A,3A,,,3A,4A,,2A,,3A,3A
 Chicago (Little Village),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,2A,,,3A,,,,,2A,,,,,2A,2A
-Chicago (Lycée Français de Chicago),Chicago,unclassified,False,True,,,41.85452758620689,-87.67469195402299,,,1A,,1A,,1A,1A,1A,,,,,,,1A,,,
+Chicago (Lycée Français de Chicago),Chicago,private,True,False,,,41.85452758620689,-87.67469195402299,,,1A,,1A,,1A,1A,1A,,,,,,,1A,,,
 Chicago (Manley),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,1A,1A,,,,,,,,,1A,1A
 Chicago (Marine Leadership Academy),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,1A,1A,,,1A,,,,,,,,,,,1A,,1A,1A
 Chicago (Marist),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
@@ -199,7 +199,7 @@ Chicago (Morgan Park),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.6
 Chicago (Mother McAuley),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,,3A,,2A,,2A,4A,,4A,3A,,2A,,,3A,2A,,,3A
 Chicago (Mt. Carmel),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,2A,,3A,,3A,,,4A,,,,2A,3A,4A,,,2A,3A,
 Chicago (Noble Street Charter),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,1A,,2A,2A,,,,,2A,2A,,1A,,2A,2A
-Chicago (Noble/Baker),Chicago,unclassified,False,True,,,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,,,,,2A,2A
+Chicago (Noble/Baker),Chicago,public_nonboundaried,False,False,,,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,,,,,2A,2A
 Chicago (Noble/Bulls),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,2A,,3A,3A,3A,,,,,4A,4A,2A,,3A,3A
 Chicago (Noble/Butler),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,,,,,,2A,2A,3A,,1A,,,,,,,2A,2A
 Chicago (Noble/Comer),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,3A,3A,3A,,,,2A,,,,,2A,2A
@@ -242,11 +242,11 @@ Chicago (St. Francis de Sales),Chicago,private,True,False,1.0,3.0,41.85452758620
 Chicago (St. Ignatius College Prep),Chicago,private,True,False,1.0,2.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,2A,4A,4A,4A,2A,2A,2A,2A,4A,4A,3A,1A,3A,3A
 Chicago (St. Patrick),Chicago,private,True,False,1.0,1.0,41.85452758620689,-87.67469195402299,2A,,3A,,2A,,,4A,,,,2A,3A,4A,,,,2A,
 Chicago (St. Rita),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,2A,,2A,,2A,,,3A,,,,2A,2A,3A,,,,3A,
-Chicago (Steinmetz),Chicago,unclassified,False,True,,,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,3A,3A,,,2A,2A
+Chicago (Steinmetz),Chicago,public,False,False,,,41.85452758620689,-87.67469195402299,,,,,,,,,,,,,,3A,3A,,,2A,2A
 Chicago (Sullivan),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,2A,2A,,,2A,,3A,3A,3A,,,,1A,,,,,2A,2A
 Chicago (Taft),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,,3A,4A,4A,3A,2A,3A,3A
 Chicago (Tilden),Chicago,public,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,1A,,1A,1A,,,,,,,,,,,
-Chicago (UCCS/Woodlawn),Chicago,public_unverified,False,True,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,,,,,,,,,,2A,2A
+Chicago (UCCS/Woodlawn),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,2A,2A,,,,,,,,,,2A,2A
 Chicago (University),Chicago,private,True,False,1.0,3.0,41.85452758620689,-87.67469195402299,2A,2A,2A,2A,2A,1A,3A,2A,2A,,,,,2A,,2A,2A,2A,2A
 Chicago (Uplift),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,1A,1A,1A,,,,,,,,,1A,1A
 Chicago (Urban Prep/Bronzeville),Chicago,public_nonboundaried,False,False,0.0,0.0,41.85452758620689,-87.67469195402299,,,,,,,,2A,,,,,,,,,,2A,
@@ -264,7 +264,7 @@ Chrisman,Chrisman,public,False,False,0.0,0.0,39.7996,-87.6556,1A,,1A,,,,1A,1A,1A
 Christopher,Christopher,public,False,False,0.0,0.0,37.9849,-89.0574,1A,1A,,,,,1A,1A,1A,,,1A,,,,,,1A,1A
 Cisne,Cisne,public,False,False,0.0,0.0,38.5159,-88.4375,,,,,,,1A,1A,,,,1A,,1A,1A,,,1A,1A
 Cissna Park,Cissna Park,public,False,False,0.0,0.0,40.5858,-87.8759,,,,,,,1A,1A,1A,,,1A,,1A,,,,,
-Clay City,Clay City,unclassified,False,True,,,38.6695,-88.3516,1A,,,,,,,,,,,1A,,,,,,,
+Clay City,Clay City,public,False,False,,,38.6695,-88.3516,1A,,,,,,,,,,,1A,,,,,,,
 Clifton (Central),Clifton,public,False,False,0.0,0.0,40.9394,-87.9202,1A,,,,1A,,1A,1A,1A,1A,,,1A,1A,1A,,,1A,1A
 Clinton,Clinton,public,False,False,0.0,0.0,40.1487,-88.9627,1A,1A,1A,1A,,,2A,2A,2A,,1A,2A,1A,2A,2A,,,2A,2A
 Coal City,Coal City,public,False,False,0.0,0.0,41.2908,-88.2823,,,2A,1A,1A,1A,2A,2A,2A,1A,,2A,1A,2A,2A,1A,1A,2A,2A
@@ -315,7 +315,7 @@ Earlville,Earlville,public,False,False,0.0,0.0,41.5859,-88.9103,,,1A,,1A,,1A,1A,
 East Dubuque,East Dubuque,public,False,False,0.0,0.0,42.4875,-90.6046,1A,1A,1A,,,,1A,1A,1A,,,1A,,1A,1A,,,,
 East Moline (United),East Moline,public,False,False,0.0,0.0,41.5118,-90.4321,3A,3A,3A,,3A,2A,4A,4A,4A,,,2A,3A,4A,4A,3A,2A,3A,3A
 East Peoria,East Peoria,public,False,False,0.0,0.0,40.6696,-89.56575000000001,2A,2A,2A,1A,2A,1A,3A,3A,3A,,,2A,2A,3A,3A,2A,1A,2A,2A
-East St. Louis (SIUE Charter),East St. Louis,public_unverified,False,True,0.0,0.0,38.60604285714286,-90.12527142857142,,,,,,,,1A,,,,,,,,,,1A,1A
+East St. Louis (SIUE Charter),East St. Louis,public_nonboundaried,False,False,0.0,0.0,38.60604285714286,-90.12527142857142,,,,,,,,1A,,,,,,,,,,1A,1A
 East St. Louis (Sr.),East St. Louis,public,False,False,0.0,0.0,38.60604285714286,-90.12527142857142,2A,2A,,,,,3A,3A,3A,,,,2A,3A,3A,,,2A,2A
 Edinburg,Edinburg,public,False,False,0.0,0.0,39.6612,-89.3779,,,,,,,1A,1A,,,,1A,,1A,,,,1A,1A
 Edwardsville (H.S.),Edwardsville,public,False,False,0.0,0.0,38.8082,-89.95845,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,,3A,4A,4A,3A,2A,3A,3A
@@ -326,7 +326,7 @@ El Paso (E.P.-Gridley),El Paso,public,False,False,0.0,0.0,40.7389,-89.012,1A,1A,
 Eldorado,Eldorado,public,False,False,0.0,0.0,37.8139,-88.4434,1A,1A,1A,1A,,,2A,2A,2A,,,1A,,2A,2A,,,1A,1A
 Elgin (H.S.),Elgin,public,False,False,0.0,0.0,42.035624999999996,-88.308775,3A,3A,3A,,3A,2A,4A,4A,4A,C,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Elgin (Larkin),Elgin,public,False,False,0.0,0.0,42.035624999999996,-88.308775,3A,3A,,,3A,2A,4A,4A,4A,3A,3A,,3A,4A,4A,3A,2A,3A,3A
-Elgin (River Valley Christian),Elgin,unclassified,False,True,,,42.035624999999996,-88.308775,1A,1A,1A,,1A,,2A,2A,2A,,,,1A,2A,1A,1A,,1A,1A
+Elgin (River Valley Christian),Elgin,private,True,False,,,42.035624999999996,-88.308775,1A,1A,1A,,1A,,2A,2A,2A,,,,1A,2A,1A,1A,,1A,1A
 Elgin (St. Edward),Elgin,private,True,False,2.0,5.0,42.035624999999996,-88.308775,1A,1A,1A,1A,1A,,2A,1A,2A,1A,,,1A,1A,1A,1A,,1A,1A
 Elizabethtown (Hardin County),Elizabethtown,public,False,False,0.0,0.0,37.4665,-88.2867,,,1A,,,,1A,1A,1A,,,1A,,1A,1A,,,,
 Elk Grove Village (E.G.),Elk Grove Village,public,False,False,0.0,0.0,42.00575,-87.98169999999999,3A,3A,3A,2A,3A,2A,4A,4A,4A,C,2A,2A,3A,4A,4A,2A,2A,3A,3A
@@ -418,8 +418,8 @@ Hume (Shiloh),Hume,public,False,False,0.0,0.0,39.8009,-87.8747,,,,,,,,1A,1A,,,,,
 Huntley,Huntley,public,False,False,0.0,0.0,42.1756,-88.4268,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Hutsonville,Hutsonville,public,False,False,0.0,0.0,39.1064,-87.6695,,,,,,,1A,2A,,,,,,,1A,,,,
 Jacksonville (H.S.),Jacksonville,public,False,False,0.0,0.0,39.7161,-90.24525,2A,2A,2A,1A,2A,1A,3A,3A,3A,2A,1A,2A,2A,3A,3A,2A,1A,2A,2A
-Jacksonville (Illinois School for the Deaf),Jacksonville,public_unverified,False,True,0.0,0.0,39.7161,-90.24525,,,,,,,,1A,,,,,,,,,,1A,1A
-Jacksonville (Illinois School for the Visually Impaired),Jacksonville,public_unverified,False,True,0.0,0.0,39.7161,-90.24525,,,,,,,,,,,,,1A,,,,,,
+Jacksonville (Illinois School for the Deaf),Jacksonville,public_nonboundaried,False,False,0.0,0.0,39.7161,-90.24525,,,,,,,,1A,,,,,,,,,,1A,1A
+Jacksonville (Illinois School for the Visually Impaired),Jacksonville,public_nonboundaried,False,False,0.0,0.0,39.7161,-90.24525,,,,,,,,,,,,,1A,,,,,,
 Jacksonville (Routt),Jacksonville,private,True,False,6.0,17.0,39.7161,-90.24525,,,1A,,,,1A,1A,,,,1A,,1A,1A,,,1A,1A
 Jerseyville (Jersey),Jerseyville,public,False,False,0.0,0.0,39.1213,-90.3338,2A,2A,2A,,2A,1A,3A,3A,3A,2A,1A,2A,2A,3A,3A,1A,1A,2A,2A
 Johnsburg,Mchenry,public,False,False,0.0,0.0,42.34265,-88.26245,1A,1A,1A,1A,1A,1A,2A,2A,2A,1A,1A,2A,1A,2A,2A,1A,1A,2A,2A
@@ -496,7 +496,7 @@ McLeansboro (Hamilton County),Mc Leansboro,public,False,False,0.0,0.0,38.1251,-8
 Melrose Park (Walther Christian),Melrose Park,private,True,False,3.0,7.0,41.90743333333333,-87.86906666666665,1A,1A,,,,,1A,1A,1A,,,,1A,1A,1A,1A,,1A,1A
 Mendon (Unity),Mendon,public,False,False,0.0,0.0,40.0857,-91.2899,,,1A,,,,1A,1A,1A,,,1A,,1A,1A,,,1A,1A
 Mendota,Mendota,public,False,False,0.0,0.0,41.5443,-89.1083,1A,1A,1A,1A,1A,1A,2A,2A,2A,,,2A,1A,2A,2A,1A,1A,2A,2A
-Meredosia (M.-Chambersburg),Meredosia,unclassified,False,True,,,39.8173,-90.5339,,,,,,,,,,,,,,,,,,1A,1A
+Meredosia (M.-Chambersburg),Meredosia,public,False,False,,,39.8173,-90.5339,,,,,,,,,,,,,,,,,,1A,1A
 Metamora,Metamora,public,False,False,0.0,0.0,40.7844,-89.4309,2A,2A,2A,1A,2A,1A,3A,3A,3A,,,2A,2A,3A,3A,2A,1A,2A,2A
 Metropolis (Massac County),Metropolis,public,False,False,0.0,0.0,37.1753,-88.7252,1A,1A,1A,1A,1A,,2A,2A,2A,,,2A,,2A,2A,1A,,2A,2A
 Midlothian (Bremen),Midlothian,public,False,False,0.0,0.0,41.635,-87.7362,2A,2A,2A,,2A,1A,3A,3A,3A,2A,2A,2A,2A,3A,3A,2A,1A,3A,3A
@@ -505,7 +505,7 @@ Milledgeville,Milledgeville,public,False,False,0.0,0.0,41.9674,-89.7801,,,,,,,1A
 Minonk (Fieldcrest),Minonk,public,False,False,0.0,0.0,40.8985,-89.0349,1A,1A,1A,1A,,,1A,1A,1A,,1A,1A,,1A,1A,,,1A,1A
 Minooka,Minooka,public,False,False,0.0,0.0,41.4615,-88.2786,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Moline (H.S.),Moline,public,False,False,0.0,0.0,41.49865,-90.50655,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,,2A,3A,4A,4A,3A,2A,3A,3A
-Moline (Quad Cities Christian School),Moline,unclassified,False,True,,,41.49865,-90.50655,,,,,,,,,,,,,1A,,,,,,
+Moline (Quad Cities Christian School),Moline,private,True,False,,,41.49865,-90.50655,,,,,,,,,,,,,1A,,,,,,
 Momence,Momence,public,False,False,0.0,0.0,41.1593,-87.6575,,,1A,,1A,,1A,1A,1A,,,1A,,1A,1A,1A,,1A,1A
 Monmouth (M.-Roseville),Monmouth,public,False,False,0.0,0.0,40.9107,-90.6448,1A,1A,1A,,1A,,2A,2A,2A,1A,,2A,1A,2A,2A,1A,,2A,2A
 Monmouth (United),Monmouth,public,False,False,0.0,0.0,40.9107,-90.6448,1A,,1A,1A,,,1A,1A,1A,,,1A,1A,1A,1A,,,1A,1A
@@ -513,11 +513,11 @@ Monticello,Monticello,public,False,False,0.0,0.0,40.0263,-88.5686,1A,1A,1A,1A,1A
 Mooseheart,Mooseheart,private,True,False,2.0,5.0,41.8241,-88.3315,,,,,1A,,1A,1A,1A,,,,,,,,,1A,1A
 Morris,Morris,public,False,False,0.0,0.0,41.3672,-88.4178,2A,2A,2A,,2A,1A,3A,3A,3A,2A,1A,2A,2A,3A,3A,2A,1A,2A,2A
 Morrison,Morrison,public,False,False,0.0,0.0,41.8167,-89.969,,,,,,,1A,1A,1A,,,1A,1A,1A,1A,,,1A,1A
-Morrisonville,Morrisonville,unclassified,False,True,,,39.4153,-89.4541,,,,,,,,,,,,,,1A,,,,,
+Morrisonville,Morrisonville,public,False,False,,,39.4153,-89.4541,,,,,,,,,,,,,,1A,,,,,
 Morton,Morton,public,False,False,0.0,0.0,40.6148,-89.4604,2A,2A,2A,2A,2A,1A,3A,3A,3A,2A,1A,2A,2A,3A,3A,2A,1A,2A,2A
 Morton Grove (MCC Academy),Morton Grove,private,True,False,2.0,4.0,42.0431,-87.7899,,,,,1A,,1A,1A,1A,,,,,,,,,,
 Mounds (Meridian),Mounds,public,False,False,0.0,0.0,37.1188,-89.2001,,,,,,,1A,1A,1A,,,,,,1A,,,1A,1A
-Mount Carroll (West Carroll),Mount Carroll,unclassified,False,True,,,42.1053,-89.9845,1A,,1A,1A,,,1A,1A,1A,,,1A,1A,1A,1A,,,1A,1A
+Mount Carroll (West Carroll),Mount Carroll,public,False,False,,,42.1053,-89.9845,1A,,1A,1A,,,1A,1A,1A,,,1A,1A,1A,1A,,,1A,1A
 Moweaqua (Central A & M),Moweaqua,public,False,False,0.0,0.0,39.6248,-89.019,1A,1A,1A,1A,,,1A,1A,1A,,,1A,,1A,1A,,,1A,1A
 Mt. Carmel,Mount Carmel,public,False,False,0.0,0.0,38.4147,-87.7911,1A,1A,1A,1A,1A,1A,2A,2A,2A,,,,1A,2A,2A,1A,1A,2A,2A
 Mt. Olive,Mount Olive,public,False,False,0.0,0.0,39.0705,-89.7448,,,1A,1A,,,1A,1A,1A,,,1A,,,,,,1A,1A
@@ -530,7 +530,7 @@ Mulberry Grove,Mulberry Grove,public,False,False,0.0,0.0,38.9311,-89.2463,,,,,,,
 Mundelein (Carmel),Mundelein,private,True,False,2.0,6.0,42.2636,-88.0048,2A,3A,3A,2A,2A,1A,3A,3A,4A,2A,2A,,2A,3A,4A,3A,2A,2A,2A
 Mundelein (H.S.),Mundelein,public,False,False,0.0,0.0,42.2636,-88.0048,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Murphysboro,Murphysboro,public,False,False,0.0,0.0,37.7655,-89.3317,1A,1A,2A,1A,1A,,2A,2A,2A,,1A,,1A,2A,2A,1A,,2A,2A
-Naperville (Calvary Christian),Naperville,unclassified,False,True,,,41.76968333333333,-88.1449,,,,,,,1A,,,,,,,,,,,1A,1A
+Naperville (Calvary Christian),Naperville,private,True,False,,,41.76968333333333,-88.1449,,,,,,,1A,,,,,,,,,,,1A,1A
 Naperville (Central),Naperville,public,False,False,0.0,0.0,41.76968333333333,-88.1449,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Naperville (Neuqua Valley),Naperville,public,False,False,0.0,0.0,41.76968333333333,-88.1449,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Naperville (North),Naperville,public,False,False,0.0,0.0,41.76968333333333,-88.1449,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
@@ -563,7 +563,7 @@ Oak Park (Fenwick),Oak Park,private,True,False,3.0,7.0,41.88465,-87.790075,3A,3A
 Oak Park (O.P.-River Forest),Oak Park,public,False,False,0.0,0.0,41.88465,-87.790075,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Oakland,Oakland,public,False,False,0.0,0.0,39.6516,-88.0253,1A,,,,,,,1A,1A,,,,,,1A,,,1A,1A
 Oblong,Oblong,public,False,False,0.0,0.0,39.001,-87.895,1A,1A,1A,1A,,,1A,,,,,1A,1A,2A,1A,,,,
-Odin,Odin,unclassified,False,True,,,38.6088,-89.0552,,,,,,,,,,,,1A,,1A,1A,,,,
+Odin,Odin,public,False,False,,,38.6088,-89.0552,,,,,,,,,,,,1A,,1A,1A,,,,
 O'Fallon (First Baptist Academy),O Fallon,private,True,False,7.0,19.0,38.5718,-89.8957,1A,1A,,,,,1A,,,,,,,,,,,1A,1A
 O'Fallon (H.S.),O Fallon,public,False,False,0.0,0.0,38.5718,-89.8957,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 Okawville,Okawville,public,False,False,0.0,0.0,38.4319,-89.523,1A,1A,1A,1A,,,1A,1A,1A,,,,,1A,1A,,,1A,1A
@@ -749,7 +749,7 @@ Wayne City,Wayne City,public,False,False,0.0,0.0,38.3328,-88.5833,,,1A,,,,1A,1A,
 West Chicago (H.S.),West Chicago,public,False,False,0.0,0.0,41.8867,-88.2031,3A,3A,3A,2A,3A,2A,4A,4A,4A,3A,3A,2A,3A,4A,4A,3A,2A,3A,3A
 West Chicago (Wheaton Academy),West Chicago,private,True,False,3.0,7.0,41.8867,-88.2031,2A,2A,2A,1A,2A,1A,3A,3A,2A,1A,,2A,1A,3A,2A,2A,1A,2A,2A
 West Frankfort (Frankfort),West Frankfort,public,False,False,0.0,0.0,37.8979,-88.9307,1A,1A,1A,1A,,,2A,2A,2A,,,1A,1A,2A,2A,,,1A,1A
-West Prairie,Colchester,unclassified,False,True,,,40.4156,-90.7846,1A,,,,,,1A,1A,1A,,,1A,,1A,1A,,,1A,1A
+West Prairie,Colchester,public,False,False,,,40.4156,-90.7846,1A,,,,,,1A,1A,1A,,,1A,,1A,1A,,,1A,1A
 Westmont,Westmont,public,False,False,0.0,0.0,41.7728,-87.9757,1A,1A,1A,1A,1A,,2A,2A,2A,,,1A,1A,2A,2A,1A,,1A,1A
 Westville,Westville,public,False,False,0.0,0.0,40.0451,-87.636,1A,,1A,1A,,,2A,2A,2A,,,1A,1A,2A,2A,,,1A,1A
 Wheaton (North),Wheaton,public,False,False,0.0,0.0,41.856049999999996,-88.10050000000001,3A,3A,3A,2A,3A,2A,4A,4A,4A,C,2A,2A,3A,4A,4A,3A,2A,3A,3A

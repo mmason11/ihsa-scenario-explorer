@@ -113,6 +113,52 @@ def normalize_status(v):
     return "public", False
 
 
+# Manual resolutions for schools the source spreadsheet left as "?"/blank in
+# Private? (the column is itself a VLOOKUP into the 'Public v Private' sheet,
+# which is hand-maintained and wasn't filled in for these — not safe to patch
+# in the .xlsx directly, since it's full of cross-sheet INDEX/MATCH formulas
+# that openpyxl can't recalculate; editing cached cells there blanks the rest
+# of the workbook on save). Researched July 2026 via ihsa.org / school sites:
+# charter schools, CPS "options" schools, and state-run schools are public
+# (non-boundaried, no geographic attendance area); "Christian Academy/School"
+# names are private; the rest were just small/newly-added rows IHSA hadn't
+# classified yet and are ordinary boundaried public high schools.
+REVIEW_RESOLUTIONS = {
+    # private
+    "Cary (Trinity Oaks Christian Academy)": "private",
+    "Chicago (Lycée Français de Chicago)": "private",
+    "Elgin (River Valley Christian)": "private",
+    "Moline (Quad Cities Christian School)": "private",
+    "Naperville (Calvary Christian)": "private",
+    # public, non-boundaried: charter / CPS options / state-run schools
+    "Chicago (ACE Amandla Charter)": "public_nonboundaried",
+    "Chicago (C. Math and Science Charter)": "public_nonboundaried",
+    "Chicago (C. Tech Academy Charter)": "public_nonboundaried",
+    "Chicago (Catalyst/Maria)": "public_nonboundaried",
+    "Chicago (EPIC Academy Charter)": "public_nonboundaried",
+    "Chicago (Excel Academy/Englewood)": "public_nonboundaried",
+    "Chicago (Excel Academy/Roseland)": "public_nonboundaried",
+    "Chicago (Excel Academy/South Shore)": "public_nonboundaried",
+    "Chicago (Horizon/Belmont)": "public_nonboundaried",
+    "Chicago (Legal Prep Charter)": "public_nonboundaried",
+    "Chicago (Noble/Baker)": "public_nonboundaried",
+    "Chicago (UCCS/Woodlawn)": "public_nonboundaried",
+    "East St. Louis (SIUE Charter)": "public_nonboundaried",
+    "Jacksonville (Illinois School for the Deaf)": "public_nonboundaried",
+    "Jacksonville (Illinois School for the Visually Impaired)": "public_nonboundaried",
+    # ordinary boundaried public schools
+    "Chicago (Alcott)": "public",
+    "Chicago (Gage Park)": "public",
+    "Chicago (Steinmetz)": "public",
+    "Clay City": "public",
+    "Meredosia (M.-Chambersburg)": "public",
+    "Morrisonville": "public",
+    "Mount Carroll (West Carroll)": "public",
+    "Odin": "public",
+    "West Prairie": "public",
+}
+
+
 def main():
     df = pd.read_excel(SRC, sheet_name="All")
     rows = []
@@ -122,6 +168,8 @@ def main():
         if not school or school.lower() == "nan":
             continue
         status, needs_review = normalize_status(r["Private?"])
+        if school in REVIEW_RESOLUTIONS:
+            status, needs_review = REVIEW_RESOLUTIONS[school], False
         city = parse_city(school)
         if city not in cache:
             cache[city] = geocode_city(city)
