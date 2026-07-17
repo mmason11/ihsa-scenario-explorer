@@ -67,6 +67,20 @@
   .hostpick input{width:110px;}
   .hostpick button{padding:4px 10px; font-size:12px;}
   .hostpick .hostnote{color:var(--good); font-weight:700; font-size:11.5px;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(30,42,56,.55); display:flex;
+                 align-items:center; justify-content:center; z-index:1000; padding:20px;}
+  .modal{background:#fff; border:1px solid var(--line); max-width:640px; width:100%;
+         max-height:88vh; overflow:auto; box-shadow:0 12px 40px rgba(0,0,0,.3);}
+  .modal h3{font-family:Georgia,serif; font-size:18px; padding:16px 20px; border-bottom:1px solid var(--line);}
+  .modal .modal-body{padding:14px 20px;}
+  .modal .modal-foot{padding:12px 20px; border-top:1px solid var(--line); display:flex;
+                      gap:10px; justify-content:flex-end; position:sticky; bottom:0; background:#fff;}
+  .modal table{margin-top:8px;}
+  .modal table button{padding:3px 10px; font-size:11.5px;}
+  .modal table tr.hl td{background:#fdf3f4;}
+  button.secondary{background:transparent; color:var(--ink); border:1px solid var(--line);}
+  button.secondary:hover{background:#f3f1ec;}
+  .detail .hostBtn,.detail .regHostBtn,.detail .moveBtn{padding:3px 10px; font-size:11.5px;}
   h3{font-family:Georgia,serif; font-size:20px; margin:30px 0 4px;}
   .tblnote{font-size:13px; color:var(--muted); margin-bottom:10px;}
   table.stats{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); font-size:14px;}
@@ -219,6 +233,10 @@
     </div>
 
     <div id="ovrDetail"><span class="hint">Pick a school above to view or edit its enrollment, classification, and sectional assignment.</span></div>
+
+    <h3>Active sectional swaps</h3>
+    <div class="tblnote" id="ovrSwapsNote">No active swaps.</div>
+    <table class="stats" id="ovrSwapsTable"></table>
 
     <h3>Active overrides</h3>
     <div class="tblnote" id="ovrListNote"></div>
@@ -505,16 +523,19 @@ function pickHost(members, hostName){
   return best;
 }
 
-function metricsFor(groups, regSize){
+function metricsFor(groups, regSize, regHostLookup, baseIndex){
+  baseIndex=baseIndex||0;
   const rows=[];
   groups.forEach((g,gi)=>{
     if(!g.members.length) return;
+    const trueGi=baseIndex+gi;
     const secHost=g.hostLoc ? g.hostLoc : pickHost(g.members, g.host);
     const nReg=Math.max(1,Math.round(g.members.length/regSize));
     const regs=bisect(g.members,nReg);
     regs.forEach((reg,ri)=>{
-      const regHost=pickHost(reg);
-      reg.forEach(x=>rows.push({s:x, sec:gi, secName:g.name, reg:ri,
+      const override=regHostLookup&&regHostLookup(trueGi,ri);
+      const regHost=override?override:pickHost(reg);
+      reg.forEach(x=>rows.push({s:x, sec:trueGi, secName:g.name, reg:ri,
         secHost:secHost.n, regHost:regHost.n,
         secMi:hav(x.la,x.lo,secHost.la,secHost.lo), regMi:hav(x.la,x.lo,regHost.la,regHost.lo)}));
     });
@@ -552,6 +573,11 @@ function hull(pts){
 
 const mapState = {Current:{rows:[],sec:null,reg:null}, Proposed:{rows:[],sec:null,reg:null}};
 let hostOverrides = {Current:{}, Proposed:{}};
+// regHostOverrides[which]["si:ri"] = host — regionals have no persistent identity across
+// runs (recomputed geographically every time), but "regional ri within sectional si" is
+// stable WITHIN one sport/class/P/R combo, since bisect() is a pure function of the
+// sectional's membership — same reset-on-signature-change treatment as hostOverrides below.
+let regHostOverrides = {Current:{}, Proposed:{}};
 let lastSig = "";
 
 function drawMap(which){
@@ -653,25 +679,17 @@ function renderDetail(which){
   const title=secName(which,st.sec)+(st.reg!==null?` — Regional ${st.reg+1}`:"");
   const ov=hostOverrides[which][st.sec];
   let h=`<h4>${title}</h4>
-    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi</div>
-    <div class="hostpick">
-      <label>Sectional host</label>
-      <select id="hostSel${which}">
-        <optgroup label="Members of this sectional">
-          ${[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.s.n))].sort().map(n=>`<option value="m:${n}"${!ov&&n===rows[0].secHost?" selected":""}>${n}</option>`).join("")}
-        </optgroup>
-        <optgroup label="Other">
-          <option value="any">Any IHSA school…</option>
-          <option value="custom"${ov&&ov.custom?" selected":""}>Custom venue (by address)…</option>
-        </optgroup>
-      </select>
-      <span id="hostExtra${which}"></span>
-      ${ov?`<button id="hostReset${which}">Reset</button>`:""}
-    </div>
-    <table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th><th>Move to</th></tr>`;
+    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi
+    <button class="secondary hostBtn" style="margin-left:10px;">Change host&hellip;</button></div>`;
+  if(st.reg!==null){
+    const regOv=regHostOverrides[which][`${st.sec}:${st.reg}`];
+    const regMean=rows.reduce((s,r)=>s+r.regMi,0)/rows.length;
+    h+=`<div class="dmeta">host: ${rows[0].regHost}${regOv?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${regMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.regMi)).toFixed(0)} mi
+    <button class="secondary regHostBtn" style="margin-left:10px;">Change host&hellip;</button></div>`;
+  }
+  h+=`<table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th><th>Sectional</th></tr>`;
   let lastReg=-1;
   const sp=$("sport").value;
-  const moveOptions=[...new Set(st.rows.map(r=>r.secName))].sort();
   rows.forEach(r=>{
     if(st.reg===null&&r.reg!==lastReg){
       h+=`<tr class="regrow"><td colspan="4" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
@@ -682,94 +700,342 @@ function renderDetail(which){
     const esc=r.s.n.replace(/"/g,"&quot;");
     h+=`<tr><td>${r.s.n}${r.s.p?'<span class="privtag">PRIVATE</span>':""}</td>
       <td class="mi">${r.regMi.toFixed(0)}</td><td class="mi">${r.secMi.toFixed(0)}</td>
-      <td><select class="moveSel" data-school="${esc}">
-        <option value="">Natural placement</option>
-        ${moveOptions.map(n=>`<option value="${n.replace(/"/g,"&quot;")}"${moved===n?" selected":""}>${n}</option>`).join("")}
-      </select>${moved?' <span class="hostnote">(moved)</span>':""}</td></tr>`;
+      <td><button class="secondary moveBtn" data-school="${esc}">Move&hellip;</button>${moved?' <span class="hostnote">(moved)</span>':""}</td></tr>`;
   });
   el.innerHTML=h+"</table>";
   el.querySelectorAll("tr.regrow td").forEach(td=>{
     td.onclick=()=>setSel(which,st.sec,+td.dataset.reg);
   });
-  el.querySelectorAll(".moveSel").forEach(sel=>{
-    sel.onchange=()=>{
-      const nm=sel.dataset.school;
-      const ov=overrides[nm]||(overrides[nm]={});
-      ov.sectional=ov.sectional||{}; ov.sectional[sp]=ov.sectional[sp]||{};
-      if(!sel.value) delete ov.sectional[sp][which]; else ov.sectional[sp][which]=sel.value;
-      pruneOvr(nm); saveOverrides(); run();
-      if($("ovrPick").value===nm) renderOvrDetail(nm);
-    };
+  el.querySelectorAll(".moveBtn").forEach(btn=>{
+    btn.onclick=()=>openMoveModal(which, btn.dataset.school);
   });
-  wireHostPicker(which, st.sec);
+  const hostBtn=el.querySelector(".hostBtn");
+  if(hostBtn) hostBtn.onclick=()=>openHostPicker(which, st.sec);
+  const regHostBtn=el.querySelector(".regHostBtn");
+  if(regHostBtn) regHostBtn.onclick=()=>openHostPicker(which, st.sec, st.reg);
 }
 
-function wireHostPicker(which, si){
-  const sel=document.getElementById("hostSel"+which);
-  const extra=document.getElementById("hostExtra"+which);
-  const reset=document.getElementById("hostReset"+which);
-  if(!sel) return;
-  if(reset) reset.onclick=()=>{ delete hostOverrides[which][si]; run(); };
-  sel.onchange=()=>{
-    const v=sel.value;
-    if(v.startsWith("m:")){
-      const s=byName[v.slice(2)];
-      hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
-      run();
-    }else if(v==="any"){
-      extra.innerHTML=`<input list="allschools${which}" id="anyIn${which}" placeholder="Type a school name…">
-        <datalist id="allschools${which}">${DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("")}</datalist>
-        <button id="anyGo${which}">Set</button>`;
-      document.getElementById("anyGo"+which).onclick=()=>{
-        const s=byName[document.getElementById("anyIn"+which).value];
-        if(!s){alert("School not found — pick a name from the list.");return;}
-        hostOverrides[which][si]={n:s.n, la:s.la, lo:s.lo};
-        run();
-      };
-    }else if(v==="custom"){
-      extra.innerHTML=`<input id="cn${which}" placeholder="Venue name (optional)" style="width:150px;">
-        <input id="caddr${which}" placeholder="Street address, city, IL" style="min-width:220px;">
-        <button id="cgo${which}">Look up &amp; set</button>
-        <span id="cstatus${which}" class="fieldnote"></span>`;
-      document.getElementById("cgo"+which).onclick=()=>geocodeAndSetHost(which,si);
-      document.getElementById("caddr"+which).addEventListener("keydown",e=>{
-        if(e.key==="Enter") geocodeAndSetHost(which,si);
-      });
+// ---- modal infrastructure: a single overlay at a time, dismissed by backdrop click,
+// Escape, or an explicit Cancel/Close button inside the caller's markup.
+let currentModal=null;
+function closeModal(){
+  if(currentModal){ currentModal.remove(); currentModal=null; }
+  document.removeEventListener("keydown", modalEscHandler);
+}
+function modalEscHandler(e){ if(e.key==="Escape") closeModal(); }
+function openModal(innerHtml, onMount){
+  closeModal();
+  const wrap=document.createElement("div");
+  wrap.className="modal-overlay";
+  wrap.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${innerHtml}</div>`;
+  wrap.addEventListener("click",e=>{ if(e.target===wrap) closeModal(); });
+  document.body.appendChild(wrap);
+  document.addEventListener("keydown", modalEscHandler);
+  currentModal=wrap;
+  if(onMount) onMount(wrap);
+  return wrap;
+}
+
+// Resolves a sectional's current effective host to {n,la,lo} — a stored override
+// (member or custom venue, both carry coordinates already) or, failing that, the
+// real school named in the row data (works for both actual IHSA hosts and the
+// closest-to-centroid pick, since both are always real member schools).
+function hostCoordsFor(which, si){
+  const ov=hostOverrides[which][si];
+  if(ov) return {n:ov.n, la:ov.la, lo:ov.lo};
+  const r=mapState[which].rows.find(r=>r.sec===si);
+  if(!r) return null;
+  const s=byName[r.secHost];
+  return s? {n:r.secHost, la:s.la, lo:s.lo} : null;
+}
+
+function renderHostPreview(container, rows, isReg, candidate){
+  if(!candidate){ container.innerHTML='<div class="dmeta">Pick a host site above to preview travel distances.</div>'; return; }
+  const dd=rows.map(r=>({s:r.s, cur:isReg?r.regMi:r.secMi, next:hav(r.s.la,r.s.lo,candidate.la,candidate.lo)}))
+               .sort((a,b)=>b.next-a.next);
+  const mean=dd.reduce((s,d)=>s+d.next,0)/dd.length;
+  const max=Math.max(...dd.map(d=>d.next));
+  let h=`<div class="dmeta">Previewing host: <strong>${candidate.n}</strong> &middot; avg ${mean.toFixed(0)} mi &middot; max ${max.toFixed(0)} mi</div>
+    <table><tr><th>School</th><th style="text-align:right">Current mi</th><th style="text-align:right">New mi</th><th style="text-align:right">&Delta;</th></tr>`;
+  dd.forEach(d=>{
+    const delta=d.next-d.cur;
+    const cls=delta>0.5?"up":(delta<-0.5?"down":"");
+    h+=`<tr><td>${d.s.n}${d.s.p?'<span class="privtag">PRIVATE</span>':""}</td>
+      <td class="mi">${d.cur.toFixed(0)}</td><td class="mi">${d.next.toFixed(0)}</td>
+      <td class="mi ${cls}">${delta>0?"+":""}${delta.toFixed(0)}</td></tr>`;
+  });
+  container.innerHTML=h+"</table>";
+}
+
+// Pop-up host picker shared by sectional (ri omitted) and regional (ri given) levels.
+// Choosing a candidate previews every school's distance to it live; nothing is
+// committed to hostOverrides/regHostOverrides until "Save selection" is clicked.
+function openHostPicker(which, si, ri){
+  const isReg=ri!=null;
+  let rows=mapState[which].rows.filter(r=>r.sec===si);
+  if(isReg) rows=rows.filter(r=>r.reg===ri);
+  if(!rows.length) return;
+  const groupLabel=isReg?`${secName(which,si)} — Regional ${ri+1}`:secName(which,si);
+  const curHostName=isReg?rows[0].regHost:rows[0].secHost;
+  const ovStore=isReg?regHostOverrides[which]:hostOverrides[which];
+  const ovKey=isReg?`${si}:${ri}`:si;
+  const ov=ovStore[ovKey];
+  const hasOv=!!ov;
+  const members=[...new Set(rows.map(r=>r.s.n))].sort();
+  // Custom-venue overrides carry their own coords (curHostName isn't a member school
+  // in that case, so a rows-lookup would miss it) — prefer the stored override outright.
+  let candidate=ov?{n:ov.n,la:ov.la,lo:ov.lo,custom:ov.custom}
+    :(()=>{ const m=rows.find(r=>r.s.n===curHostName); return m?{n:curHostName,la:m.s.la,lo:m.s.lo}:null; })();
+
+  const html=`<h3>Change host &mdash; ${groupLabel}</h3>
+    <div class="modal-body detail" style="padding:14px 20px;border-top:0;">
+      <div class="hostpick">
+        <label>Host site</label>
+        <select id="modalHostSel">
+          <optgroup label="Members of this group">
+            ${members.map(n=>`<option value="m:${n}"${!hasOv&&n===curHostName?" selected":""}>${n}</option>`).join("")}
+          </optgroup>
+          <optgroup label="Other">
+            <option value="any">Any IHSA school&hellip;</option>
+            <option value="custom"${hasOv&&ov.custom?" selected":""}>Custom venue (by address)&hellip;</option>
+          </optgroup>
+        </select>
+        <span id="modalHostExtra"></span>
+      </div>
+      <div id="modalHostPreview"></div>
+    </div>
+    <div class="modal-foot">
+      ${hasOv?'<button class="secondary" id="modalHostResetBtn">Reset to natural host</button>':""}
+      <button class="secondary" id="modalHostCancel">Cancel</button>
+      <button id="modalHostSave">Save selection</button>
+    </div>`;
+
+  openModal(html, wrap=>{
+    const sel=wrap.querySelector("#modalHostSel");
+    const extra=wrap.querySelector("#modalHostExtra");
+    const preview=wrap.querySelector("#modalHostPreview");
+    const refresh=()=>renderHostPreview(preview, rows, isReg, candidate);
+    refresh();
+    if(hasOv&&ov.custom) extra.innerHTML=`<span class="fieldnote">Current custom venue: ${ov.n} — pick "Custom venue" again to change it.</span>`;
+    sel.onchange=()=>{
+      const v=sel.value;
+      extra.innerHTML="";
+      if(v.startsWith("m:")){
+        const s=byName[v.slice(2)];
+        candidate={n:s.n, la:s.la, lo:s.lo};
+        refresh();
+      }else if(v==="any"){
+        extra.innerHTML=`<input list="modalAllSchools" id="modalAnyIn" placeholder="Type a school name…">
+          <datalist id="modalAllSchools">${DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("")}</datalist>
+          <button id="modalAnyGo">Preview</button>`;
+        wrap.querySelector("#modalAnyGo").onclick=()=>{
+          const s=byName[wrap.querySelector("#modalAnyIn").value];
+          if(!s){alert("School not found — pick a name from the list.");return;}
+          candidate={n:s.n, la:s.la, lo:s.lo};
+          refresh();
+        };
+      }else if(v==="custom"){
+        extra.innerHTML=`<input id="modalCn" placeholder="Venue name (optional)" style="width:150px;">
+          <input id="modalCaddr" placeholder="Street address, city, IL" style="min-width:220px;">
+          <button id="modalCgo">Look up &amp; preview</button>
+          <span id="modalCstatus" class="fieldnote"></span>`;
+        const go=async()=>{
+          const addrInput=wrap.querySelector("#modalCaddr");
+          const status=wrap.querySelector("#modalCstatus");
+          const btn=wrap.querySelector("#modalCgo");
+          const addr=addrInput.value.trim();
+          if(!addr){ status.textContent="Enter a street address first."; return; }
+          btn.disabled=true; status.textContent="Looking up…";
+          try{
+            const {la,lo}=await geocodeAddress(addr);
+            const n=wrap.querySelector("#modalCn").value.trim()||addr;
+            candidate={n,la,lo,custom:true};
+            refresh();
+            status.textContent="";
+          }catch(e){
+            status.textContent=e.message||"Lookup failed — check your connection and try again.";
+          }
+          btn.disabled=false;
+        };
+        wrap.querySelector("#modalCgo").onclick=go;
+        wrap.querySelector("#modalCaddr").addEventListener("keydown",e=>{ if(e.key==="Enter") go(); });
+      }
+    };
+    wrap.querySelector("#modalHostCancel").onclick=closeModal;
+    const resetBtn=wrap.querySelector("#modalHostResetBtn");
+    if(resetBtn) resetBtn.onclick=()=>{ delete ovStore[ovKey]; closeModal(); run(); };
+    wrap.querySelector("#modalHostSave").onclick=()=>{
+      if(!candidate){ alert("Pick a host site first."); return; }
+      ovStore[ovKey]=candidate;
+      closeModal(); run();
+    };
+  });
+}
+
+// Pop-up for moving one school to a different sectional. Step 1 lists every
+// sectional in this map (Current or Proposed) with the distance THIS school would
+// travel to reach each one's host, plus a "same sectional as..." school search as a
+// friendlier way to find a target than picking a raw sectional/path name. Choosing a
+// target (other than natural placement) goes to step 2: optionally swap places with
+// a specific school already in that sectional (it moves into this school's vacated
+// spot) — true two-way swap, since just adding the school in would silently grow one
+// sectional's roster — or move in without swapping anyone out. Sectional-level only,
+// matching the per-school override shape (regionals have no persistent identity
+// across runs).
+function openMoveModal(which, schoolName){
+  const st=mapState[which];
+  const school=byName[schoolName];
+  const row=st.rows.find(r=>r.s.n===schoolName);
+  if(!school||!row) return;
+  const sp=$("sport").value;
+  const originalSec=row.secName; // where a swap partner would land, vacated by this move
+  const so=overrides[schoolName]&&overrides[schoolName].sectional&&overrides[schoolName].sectional[sp];
+  const movedTo=so&&so[which];
+  const secIdxs=[...new Set(st.rows.map(r=>r.sec))];
+  const targets=secIdxs.map(si=>{
+    const name=secName(which,si);
+    const hc=hostCoordsFor(which,si);
+    const mi=hc?hav(school.la,school.lo,hc.la,hc.lo):null;
+    return {si,name,host:hc?hc.n:"—",mi};
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+
+  // swapWith tags a school's move as one half of a swap (the other school's name, per
+  // sport+which) so the Active overrides list can surface and undo it as a pair —
+  // see swapPartnerIfMutual()/findActiveSwaps() below, which only trust the tag when
+  // BOTH sides agree, so a later plain move on just one side quietly stops it from
+  // reading as a swap instead of leaving a stale/misleading label.
+  const setSchoolTarget=(nm,target,swapPartner)=>{
+    const ov=overrides[nm]||(overrides[nm]={});
+    ov.sectional=ov.sectional||{}; ov.sectional[sp]=ov.sectional[sp]||{};
+    if(!target) delete ov.sectional[sp][which]; else ov.sectional[sp][which]=target;
+    if(swapPartner){
+      ov.sectional[sp].swapWith=ov.sectional[sp].swapWith||{};
+      ov.sectional[sp].swapWith[which]=swapPartner;
+    }else if(ov.sectional[sp].swapWith){
+      delete ov.sectional[sp].swapWith[which];
+      if(!Object.keys(ov.sectional[sp].swapWith).length) delete ov.sectional[sp].swapWith;
     }
+    pruneOvr(nm);
   };
+  const commit=(target,swapWith)=>{
+    setSchoolTarget(schoolName,target,swapWith);
+    if(swapWith) setSchoolTarget(swapWith,originalSec,schoolName);
+    saveOverrides(); closeModal(); run(); renderOvrList();
+    if($("ovrPick").value===schoolName) renderOvrDetail(schoolName);
+    if(swapWith&&$("ovrPick").value===swapWith) renderOvrDetail(swapWith);
+  };
+
+  function renderListStep(){
+    const html=`<h3>Move ${school.n}</h3>
+      <div class="modal-body detail" style="padding:0;border-top:0;">
+        <div class="dmeta">Currently: <strong>${row.secName}</strong> &middot; ${row.secMi.toFixed(0)} mi to host (${row.secHost})${movedTo?' <span class="hostnote">(manually moved)</span>':""}</div>
+        <div class="hostpick" style="margin:10px 0;">
+          <label>Same sectional as&hellip;</label>
+          <input list="modalMoveSchoolList" id="modalMoveSchoolIn" placeholder="Type a school name…">
+          <datalist id="modalMoveSchoolList">${DATA.filter(d=>d.n!==schoolName&&st.rows.some(r=>r.s.n===d.n)).map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("")}</datalist>
+          <button id="modalMoveSchoolGo">Preview</button>
+        </div>
+        <div id="modalMoveSchoolResult"></div>
+        <table><tr><th>Target sectional</th><th>Host</th><th style="text-align:right">Distance if moved</th><th style="text-align:right">&Delta;</th><th></th></tr>
+          <tr${!movedTo?' class="hl"':""}><td colspan="3">Natural placement (automatic)</td><td></td>
+            <td><button class="secondary modalMoveOpt" data-target="">${!movedTo?"Current":"Choose"}</button></td></tr>
+          ${targets.map(t=>{
+            const delta=t.mi!=null?t.mi-row.secMi:null;
+            const isCur=movedTo?t.name===movedTo:false;
+            return `<tr${isCur?' class="hl"':""}><td>${t.name}</td><td>${t.host}</td>
+              <td style="text-align:right">${t.mi!=null?t.mi.toFixed(0)+" mi":"—"}</td>
+              <td style="text-align:right">${delta!=null?(delta>0?"+":"")+delta.toFixed(0):"—"}</td>
+              <td><button class="secondary modalMoveOpt" data-target="${t.name.replace(/"/g,"&quot;")}" data-si="${t.si}">${isCur?"Current":"Choose"}</button></td></tr>`;
+          }).join("")}
+        </table>
+      </div>
+      <div class="modal-foot"><button class="secondary" id="modalMoveCancel">Close</button></div>`;
+
+    openModal(html, wrap=>{
+      wrap.querySelector("#modalMoveCancel").onclick=closeModal;
+      wrap.querySelectorAll(".modalMoveOpt").forEach(btn=>{
+        btn.onclick=()=>{
+          const target=btn.dataset.target;
+          if(!target){ commit("",null); return; } // natural placement — nothing to swap
+          renderSwapStep(target, +btn.dataset.si);
+        };
+      });
+      wrap.querySelector("#modalMoveSchoolGo").onclick=()=>{
+        const other=byName[wrap.querySelector("#modalMoveSchoolIn").value];
+        const otherRow=other&&st.rows.find(r=>r.s.n===other.n);
+        const resultEl=wrap.querySelector("#modalMoveSchoolResult");
+        if(!otherRow){ resultEl.innerHTML='<div class="dmeta">School not found in this field — pick a name from the list.</div>'; return; }
+        const hc=hostCoordsFor(which,otherRow.sec);
+        const mi=hc?hav(school.la,school.lo,hc.la,hc.lo):null;
+        const delta=mi!=null?mi-row.secMi:null;
+        resultEl.innerHTML=`<div class="dmeta">${other.n} plays in <strong>${otherRow.secName}</strong> (host: ${hc?hc.n:"—"}) &middot; ${mi!=null?mi.toFixed(0)+" mi":"—"} for ${school.n}${delta!=null?` (${delta>0?"+":""}${delta.toFixed(0)} vs current)`:""}
+          <button class="secondary modalMoveOpt2" style="margin-left:8px;">Continue&hellip;</button></div>`;
+        resultEl.querySelector(".modalMoveOpt2").onclick=()=>renderSwapStep(otherRow.secName, otherRow.sec);
+      };
+    });
+  }
+
+  function renderSwapStep(target, targetSi){
+    // originHost = the host of the sectional this school is leaving — that's the
+    // trip a swap partner would take on. Each candidate's own row in st.rows already
+    // carries their current distance to the TARGET sectional's host (r.secMi).
+    const originHost=hostCoordsFor(which, row.sec);
+    const targetHost=hostCoordsFor(which, targetSi);
+    const moveMi=targetHost?hav(school.la,school.lo,targetHost.la,targetHost.lo):null;
+    const moveDelta=moveMi!=null?moveMi-row.secMi:null;
+    const candidates=[...new Map(st.rows.filter(r=>r.sec===targetSi).map(r=>[r.s.n,r])).values()]
+      .map(r=>({s:r.s, cur:r.secMi, next:originHost?hav(r.s.la,r.s.lo,originHost.la,originHost.lo):null}))
+      .sort((a,b)=>a.s.n.localeCompare(b.s.n));
+
+    const html=`<h3>Move ${school.n} to ${target}</h3>
+      <div class="modal-body detail" style="padding:0;border-top:0;">
+        <div class="dmeta">Currently: <strong>${row.secName}</strong> &middot; ${row.secMi.toFixed(0)} mi to host (${row.secHost})</div>
+        <div class="dmeta">${school.n} would travel <strong>${moveMi!=null?moveMi.toFixed(0)+" mi":"—"}</strong> to ${target}${moveDelta!=null?` (${moveDelta>0?"+":""}${moveDelta.toFixed(0)} vs current)`:""}.</div>
+        <div class="dmeta">Pick a school already in <strong>${target}</strong> to swap places with — it moves to ${originalSec} in exchange (distance added/removed for that school shown below). Or move ${school.n} in without swapping anyone out.</div>
+        <div class="btnrow"><button class="secondary" id="modalNoSwap">Move without swapping</button></div>
+        <table><tr><th>School currently in ${target}</th><th style="text-align:right">Current mi</th><th style="text-align:right">New mi (to ${originalSec})</th><th style="text-align:right">&Delta;</th><th></th></tr>
+          ${candidates.length?candidates.map(c=>{
+            const delta=c.next!=null?c.next-c.cur:null;
+            const cls=delta>0.5?"up":(delta<-0.5?"down":"");
+            return `<tr><td>${c.s.n}</td><td class="mi">${c.cur.toFixed(0)}</td>
+              <td class="mi">${c.next!=null?c.next.toFixed(0):"—"}</td>
+              <td class="mi ${cls}">${delta!=null?(delta>0?"+":"")+delta.toFixed(0):"—"}</td>
+              <td><button class="secondary modalSwapOpt" data-name="${c.s.n.replace(/"/g,"&quot;")}">Swap with ${c.s.n}</button></td></tr>`;
+          }).join("")
+            :'<tr><td colspan="5" class="dmeta">No schools currently in this sectional.</td></tr>'}
+        </table>
+      </div>
+      <div class="modal-foot"><button class="secondary" id="modalSwapBack">Back</button><button class="secondary" id="modalSwapCancel">Close</button></div>`;
+
+    openModal(html, wrap=>{
+      wrap.querySelector("#modalSwapCancel").onclick=closeModal;
+      wrap.querySelector("#modalSwapBack").onclick=renderListStep;
+      wrap.querySelector("#modalNoSwap").onclick=()=>commit(target,null);
+      wrap.querySelectorAll(".modalSwapOpt").forEach(btn=>{
+        btn.onclick=()=>commit(target, btn.dataset.name);
+      });
+    });
+  }
+
+  renderListStep();
 }
 
 // Geocodes a street address via OpenStreetMap Nominatim (no key required; the
 // tool's request volume is low enough to stay well within Nominatim's public
-// usage policy of ~1 req/sec). Falls back to nothing but an on-screen message
-// if the lookup fails — no coordinate-entry fallback, since that's the whole
-// thing being replaced here.
-async function geocodeAndSetHost(which,si){
-  const addrInput=document.getElementById("caddr"+which);
-  const status=document.getElementById("cstatus"+which);
-  const btn=document.getElementById("cgo"+which);
-  const addr=addrInput.value.trim();
-  if(!addr){ status.textContent="Enter a street address first."; return; }
-  btn.disabled=true; status.textContent="Looking up…";
-  try{
-    const q=/\bil(linois)?\b/i.test(addr)?addr:`${addr}, Illinois`;
-    const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`;
-    const res=await fetch(url,{headers:{"Accept":"application/json"}});
-    if(!res.ok) throw new Error("bad response");
-    const results=await res.json();
-    if(!results.length){ status.textContent="Address not found — try adding a city or ZIP."; btn.disabled=false; return; }
-    const la=parseFloat(results[0].lat), lo=parseFloat(results[0].lon);
-    if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){
-      status.textContent="That address is outside Illinois — check it and try again.";
-      btn.disabled=false; return;
-    }
-    const n=document.getElementById("cn"+which).value.trim()||addr;
-    hostOverrides[which][si]={n:n, la:la, lo:lo, custom:true};
-    run();
-  }catch(e){
-    status.textContent="Lookup failed — check your connection and try again.";
-    btn.disabled=false;
+// usage policy of ~1 req/sec). Throws with a user-facing message on any failure
+// — no coordinate-entry fallback, since that's the whole thing being replaced here.
+async function geocodeAddress(addr){
+  const q=/\bil(linois)?\b/i.test(addr)?addr:`${addr}, Illinois`;
+  const url=`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`;
+  const res=await fetch(url,{headers:{"Accept":"application/json"}});
+  if(!res.ok) throw new Error("Lookup failed — check your connection and try again.");
+  const results=await res.json();
+  if(!results.length) throw new Error("Address not found — try adding a city or ZIP.");
+  const la=parseFloat(results[0].lat), lo=parseFloat(results[0].lon);
+  if(isNaN(la)||isNaN(lo)||la<36||la>43||lo<-92||lo>-87){
+    throw new Error("That address is outside Illinois — check it and try again.");
   }
+  return {la,lo};
 }
 
 const $=id=>document.getElementById(id);
@@ -822,7 +1088,7 @@ function run(){
 
   const sig=sp+"|"+kl+"|"+P+"|"+R;
   const fresh = sig!==lastSig;
-  if(fresh){ hostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
+  if(fresh){ hostOverrides={Current:{},Proposed:{}}; regHostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
 
   const realForField=realGroups(sp,kl);
   const hasReal=!!realForField;
@@ -842,7 +1108,7 @@ function run(){
   }
   applySectionalOverrides(curGroups,sp,"Current");
   curGroups.forEach((g,i)=>{ if(hostOverrides.Current[i]) g.hostLoc=hostOverrides.Current[i]; });
-  const cur=metricsFor(curGroups,R);
+  const cur=metricsFor(curGroups,R,(si,ri)=>regHostOverrides.Current[`${si}:${ri}`]);
 
   const pubGroups=simGroups(pub,8-P,"Public path");
   const prvGroups=priv.length?simGroups(priv,P,"Private path"):[];
@@ -851,7 +1117,7 @@ function run(){
   const propRows=[];
   propGroups.forEach((g,gi)=>{
     if(hostOverrides.Proposed[gi]) g.hostLoc=hostOverrides.Proposed[gi];
-    metricsFor([g],R).forEach(r=>{r.sec=gi; propRows.push(r);});
+    metricsFor([g],R,(si,ri)=>regHostOverrides.Proposed[`${si}:${ri}`],gi).forEach(r=>propRows.push(r));
   });
 
   const keep = fresh ? {Current:{sec:null,reg:null},Proposed:{sec:null,reg:null}}
@@ -1051,7 +1317,75 @@ function renderClassSummary(){
   $("classSummaryTable").innerHTML=h;
 }
 
+// A sectional move only reads as "half of a swap" when BOTH schools' swapWith tags
+// point at each other for this sport+which — if either side has since been moved
+// again independently, the tag on the other side goes stale and this stops matching,
+// so the list self-heals instead of showing a swap that no longer holds.
+function swapPartnerIfMutual(n,sp,which){
+  const v=overrides[n]&&overrides[n].sectional&&overrides[n].sectional[sp];
+  const partner=v&&v.swapWith&&v.swapWith[which];
+  if(!partner) return null;
+  const pv=overrides[partner]&&overrides[partner].sectional&&overrides[partner].sectional[sp];
+  return (pv&&pv.swapWith&&pv.swapWith[which]===n)?partner:null;
+}
+
+function findActiveSwaps(){
+  const swaps=[], seen=new Set();
+  Object.keys(overrides).forEach(n=>{
+    const o=overrides[n]; if(!o||!o.sectional) return;
+    Object.keys(o.sectional).forEach(sp=>{
+      ["Current","Proposed"].forEach(which=>{
+        const partner=swapPartnerIfMutual(n,sp,which);
+        if(!partner) return;
+        const key=[n,partner].sort().join("|")+"|"+sp+"|"+which;
+        if(seen.has(key)) return;
+        seen.add(key);
+        swaps.push({a:n, b:partner, sp, which,
+          aTarget:overrides[n].sectional[sp][which], bTarget:overrides[partner].sectional[sp][which]});
+      });
+    });
+  });
+  return swaps;
+}
+
+function undoSwap(a,b,sp,which){
+  [a,b].forEach(nm=>{
+    const ov=overrides[nm]; if(!ov||!ov.sectional||!ov.sectional[sp]) return;
+    delete ov.sectional[sp][which];
+    if(ov.sectional[sp].swapWith){
+      delete ov.sectional[sp].swapWith[which];
+      if(!Object.keys(ov.sectional[sp].swapWith).length) delete ov.sectional[sp].swapWith;
+    }
+    pruneOvr(nm);
+  });
+  saveOverrides(); run(); renderOvrList();
+  const cur=$("ovrPick").value; if(byName[cur]) renderOvrDetail(cur);
+}
+
+function renderActiveSwaps(){
+  const swaps=findActiveSwaps();
+  const note=$("ovrSwapsNote"), table=$("ovrSwapsTable");
+  if(!swaps.length){ note.textContent="No active swaps."; table.innerHTML=""; return; }
+  note.textContent=`${swaps.length} active sectional swap${swaps.length>1?"s":""}.`;
+  let h=`<tr><th style="text-align:left">Sport</th><th style="text-align:left">Side</th>
+    <th style="text-align:left">School A</th><th style="text-align:left">School B</th><th></th></tr>`;
+  swaps.forEach((s,i)=>{
+    h+=`<tr><td style="text-align:left">${SPORTS[s.sp]||s.sp}</td><td style="text-align:left">${s.which}</td>
+      <td style="text-align:left">${s.a} &rarr; ${s.aTarget}</td>
+      <td style="text-align:left">${s.b} &rarr; ${s.bTarget}</td>
+      <td><button class="secondary swapUndo" data-i="${i}">Undo swap</button></td></tr>`;
+  });
+  table.innerHTML=h;
+  table.querySelectorAll(".swapUndo").forEach(btn=>{
+    btn.onclick=()=>{
+      const s=swaps[+btn.dataset.i];
+      undoSwap(s.a,s.b,s.sp,s.which);
+    };
+  });
+}
+
 function renderOvrList(){
+  renderActiveSwaps();
   const names=Object.keys(overrides).filter(n=>overrides[n]&&Object.keys(overrides[n]).length);
   const cutoffSports=Object.keys(cutoffOverrides);
   $("ovrListNote").textContent=(names.length||cutoffSports.length)
@@ -1069,8 +1403,14 @@ function renderOvrList(){
     const secPart=(o.sectional&&Object.keys(o.sectional).length)
       ?Object.entries(o.sectional).map(([sp,v])=>{
           const parts=[];
-          if(v.Current) parts.push(`${SPORTS[sp]||sp} current→${v.Current}`);
-          if(v.Proposed) parts.push(`${SPORTS[sp]||sp} proposed→${v.Proposed}`);
+          if(v.Current){
+            const partner=swapPartnerIfMutual(n,sp,"Current");
+            parts.push(`${SPORTS[sp]||sp} current→${v.Current}${partner?` (swap w/ ${partner})`:""}`);
+          }
+          if(v.Proposed){
+            const partner=swapPartnerIfMutual(n,sp,"Proposed");
+            parts.push(`${SPORTS[sp]||sp} proposed→${v.Proposed}${partner?` (swap w/ ${partner})`:""}`);
+          }
           return parts.join("; ");
         }).filter(Boolean).join("; ")||"—"
       :"—";
