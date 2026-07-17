@@ -195,8 +195,8 @@
       and boys/girls soccer — the only sports this tool classifies by enrollment. These are two separate,
       independent mechanisms, both manual stand-ins since the tool doesn't have the history to compute either
       automatically yet: the <strong>1.65&times; multiplier</strong> applies to every private-school program by
-      default unless it has a waiver (public schools aren't eligible — the checkbox only shows for private
-      schools), and the <strong>success factor</strong> is a direct one-class bump (e.g. 2A&rarr;3A) for a program
+      default (its checkbox starts checked for private schools; public schools aren't eligible and don't get
+      the checkbox at all) — uncheck it to model a waiver. The <strong>success factor</strong> is a direct one-class bump (e.g. 2A&rarr;3A) for a program
       that reached the state final 4 twice in the rolling three seasons before the one in question — public or
       private, independent of enrollment. Doesn't account for co-op programs, which classify on their combined
       enrollment rather than any one member's own figure. A Proposed-system move is only offered while the school
@@ -322,7 +322,12 @@ function effectiveEnrollment(school,sport){
   const o=overrides[school.n];
   const base=(o&&o.en!=null)?o.en:school.en;
   if(base==null) return null;
-  const multOn=school.p&&o&&o.mult&&o.mult[sport];
+  // Private programs are multiplied by default unless explicitly waived (o.mult[sport]
+  // === false); the checkbox is never shown for public schools, so an explicit value
+  // there is unreachable via the UI. hasOwnProperty distinguishes "explicitly waived"
+  // from "no override yet" — both would otherwise look like a falsy mult[sport].
+  const explicit=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport)?o.mult[sport]:null;
+  const multOn=explicit!=null?explicit:school.p;
   return multOn?base*1.65:base;
 }
 function bumpClass(sport,cls){
@@ -367,7 +372,11 @@ function effectiveClass(school,sport){
   const base=school.c[sport];
   if(!base||base==="S"||!CLASS_CUTOFFS[sport]) return base;
   const o=overrides[school.n];
-  const hasEnOverride=o&&(o.en!=null||(school.p&&o.mult&&o.mult[sport]));
+  // Recompute only on an explicit change (enrollment override, or an explicit waiver
+  // toggle) — the multiplier defaulting on for private schools shouldn't by itself
+  // recompute anything, since the transcribed base class already reflects reality.
+  const explicitMult=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport);
+  const hasEnOverride=o&&(o.en!=null||explicitMult);
   let cls=(hasEnOverride||cutoffOverrides[sport])?predictClass(sport,effectiveEnrollment(school,sport),base):base;
   if(o&&o.success&&o.success[sport]) cls=bumpClass(sport,cls);
   return cls;
@@ -861,10 +870,10 @@ function renderOvrList(){
   if(!names.length){ $("ovrListTable").innerHTML=""; return; }
   let h=`<tr><th style="text-align:left">School</th><th style="text-align:left">Enrollment</th><th style="text-align:left">Success factor</th><th style="text-align:left">Sectional moves</th><th></th></tr>`;
   names.forEach(n=>{
-    const o=overrides[n], s=byName[n];
-    const multSports=o.mult?Object.keys(o.mult).map(sp=>SPORTS[sp]||sp):[];
-    const enPart=(o.en!=null||multSports.length)
-      ?`${o.en!=null?o.en:(s?s.en:"?")}${multSports.length?` ×1.65 (${multSports.join(", ")})`:""}`:"—";
+    const o=overrides[n];
+    const waivedSports=o.mult?Object.keys(o.mult).filter(sp=>o.mult[sp]===false).map(sp=>SPORTS[sp]||sp):[];
+    const enPart=(o.en!=null||waivedSports.length)
+      ?`${o.en!=null?o.en:"—"}${waivedSports.length?` · multiplier waived (${waivedSports.join(", ")})`:""}`:"—";
     const successPart=o.success&&Object.keys(o.success).length
       ?Object.keys(o.success).map(sp=>SPORTS[sp]||sp).join(", "):"—";
     const secPart=(o.sectional&&Object.keys(o.sectional).length)
@@ -916,7 +925,8 @@ function renderOvrDetail(name){
           h+=`<tr><td>${SPORTS[sp]||sp}</td><td>${cur}</td><td>—</td><td>—</td><td>—<span class="fieldnote"> (no published cutoffs on file)</span></td></tr>`;
           return;
         }
-        const multOn=!!(o.mult&&o.mult[sp]);
+        const multExplicit=o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp);
+        const multOn=multExplicit?o.mult[sp]:school.p;
         const successOn=!!(o.success&&o.success[sp]);
         const eff=effectiveClass(school,sp), changed=eff!==cur;
         h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td>
@@ -998,7 +1008,9 @@ function renderOvrDetail(name){
       const sp=cb.dataset.sport;
       const ov=overrides[name]||(overrides[name]={});
       ov.mult=ov.mult||{};
-      if(cb.checked) ov.mult[sp]=true; else delete ov.mult[sp];
+      // checkbox only renders for private schools, whose default is "on" — so checked
+      // just matches the default (nothing to store) and unchecked is an explicit waiver.
+      if(cb.checked) delete ov.mult[sp]; else ov.mult[sp]=false;
       pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
     };
   });
@@ -1097,7 +1109,8 @@ function schoolsRows(){
     return {
       school:d.n, priv:d.p, type:d.p?"Private":"Public", en:d.en,
       cls:effectiveClass(d,sp), baseCls:d.c[sp],
-      multEligible:d.p&&!!CLASS_CUTOFFS[sp], multOn:!!(o&&o.mult&&o.mult[sp]),
+      multEligible:d.p&&!!CLASS_CUTOFFS[sp],
+      multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:d.p,
       successEligible:!!CLASS_CUTOFFS[sp], successOn:!!(o&&o.success&&o.success[sp]),
     };
   });
@@ -1145,7 +1158,9 @@ function renderSchoolsTable(){
       const nm=cb.dataset.school, sp2=$("sport").value;
       const ov=overrides[nm]||(overrides[nm]={});
       ov.mult=ov.mult||{};
-      if(cb.checked) ov.mult[sp2]=true; else delete ov.mult[sp2];
+      // checkbox only renders for private schools (default "on"): checked matches the
+      // default (nothing to store), unchecked is an explicit waiver.
+      if(cb.checked) delete ov.mult[sp2]; else ov.mult[sp2]=false;
       pruneOvr(nm); saveOverrides(); run();
       if($("ovrPick").value===nm) renderOvrDetail(nm);
     };
