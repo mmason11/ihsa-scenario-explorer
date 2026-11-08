@@ -156,7 +156,7 @@ for sport, years in state_finalists.items():
 # tab. Deliberately excludes CHC/DAC even though the source pages cover them: those
 # use a different class-label scheme (S/M/L/C) than what's already in our data (see
 # new_sports.py's docstring), and reconciling that is a separate task.
-CLASS_FLAG_SPORTS = {"SOB", "VBG", "BKB", "BKG"}
+CLASS_FLAG_SPORTS = {"SOB", "VBG", "BKB", "BKG", "BA", "SBG", "SOG"}  # all 7 since the 2026-27 refresh (new site posts a Spring page)
 try:
     with open("classifications_flags.json", encoding="utf-8") as f:
         class_flags = json.load(f)
@@ -177,6 +177,25 @@ for printed, sports in class_flags.items():
         if d["flag"]:
             recs[canon].setdefault("flg", {})[sport] = d["flag"]
 print(f"classification corrections applied (schools_master.csv value -> official): {flag_corrections}")
+
+# Current-cycle base enrollments (enrollments.json, scraped from the same
+# Enrollments & Classifications page as classifications_flags.json — see
+# pull_classifications.py's docstring for the refresh procedure). Overrides the
+# older workbook-derived figure so effectiveEnrollment/nextYearClass work from
+# this cycle's ISBE numbers.
+try:
+    with open("enrollments.json", encoding="utf-8") as f:
+        current_enrollments = json.load(f)
+except FileNotFoundError:
+    current_enrollments = {}
+en_updates = 0
+for printed, base in current_enrollments.items():
+    canon = master_by_norm.get(norm(printed), printed if printed in recs else None)
+    if canon and canon in recs:
+        if recs[canon]["en"] != base:
+            en_updates += 1
+        recs[canon]["en"] = round(base, 1)
+print(f"enrollment updates applied (workbook -> current cycle): {en_updates}")
 
 # MaxPreps team-strength ratings (see pull_maxpreps_rankings.py) — embedded per school
 # as {sport: rating}, flattened from the richer per-class rank/record/rating/strength

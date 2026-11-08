@@ -67,9 +67,16 @@ private-only proposal (merge at the Elite 8), kept for comparison.
   (`ihsa.org/archive/{sport}/{year}/{class}pair.htm`, confirmed to go back to at least
   2021-22) for the two years before what's on the live site.
 - `classifications_flags.json` — `{school: {sport: {"class": "2A", "flag": "coop"|
-  "waived"|"multiplier"|"success"|"playup"|null}}}` for SOB/VBG/BKB/BKG (fall+winter
-  cycle pages only — no spring page has been found posted or archived for the
-  2025-26 cycle, so BA/SBG/SOG aren't covered). Output of `pull_classifications.py`;
+  "waived"|"multiplier"|"success"|"playup"|null}}}` for ALL 7 enrollment-classed
+  sports (SOB/VBG/BKB/BKG/BA/SBG/SOG), **2026-27 one-year cycle** as of the Nov 2026
+  refresh — ihsa.org's new React classifications page has a Spring tab, so
+  BA/SBG/SOG finally have official flags. Output of `merge_classifications.py` over
+  the browser-extracted season chunks in `class_pull/` (the old static .htm pages
+  `pull_classifications.py` parsed are gone; see merge_classifications.py's
+  docstring for the new refresh procedure — the parser itself is kept for the
+  archive pages). Companion `enrollments.json` ({school: current-cycle base ISBE
+  figure}) comes from the same pages; `build_v2.py` applies it over the older
+  workbook-derived `en` (751 figures updated in the Nov 2026 refresh). Output of `pull_classifications.py` historically;
   `build_v2.py` uses it to correct `schools_master.csv`'s class value where it
   differs (co-op combined enrollment isn't in that column) and embeds the flag
   itself per school as `flg`.
@@ -159,6 +166,19 @@ private-only proposal (merge at the Elite 8), kept for comparison.
 
 Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 `build_v2.py` → `schools_data.json` → `build_site.py` → `index.html`.
+
+**Cycle skew (Nov 2026 refresh):** classes, flags and enrollments are the official
+2026-27 cycle; `new_sports.py` assignments and `real_brackets.json` are still the
+2025-26 postseason (the last completed one for most sports). A school whose class
+changed between cycles — the refresh's trigger was Peoria (Notre Dame) SOB, 3A in
+2025-26 by success formula, 2A in 2026-27 as the 2022-23 title aged out of the
+window — sits in its current class on the Proposed side while last season's real
+bracket keeps it in the old class (documented in the page footer). Next refresh
+step when time allows: re-run `parse_pairings.py`/`pull_brackets.py` for the FALL
+sports (SOB/VBG/FLGG), whose 2026-27 brackets are complete on ihsa.org/data now,
+and `pull_state_finalists.py` for the 2026-27 fall finals (the SF_WINDOW_NEXT
+projection currently can't see 2026-27 trophies). SF windows in template.html were
+rolled forward (CUR = 23-24/24-25/25-26, NEXT = 24-25/25-26/26-27).
 
 ## Key modeling notes
 - Sports: SOB SOG VBG VBB BKB BKG BA SBG FLGG LAXB LAXG WPB WPG (cheer/dance/football removed).

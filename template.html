@@ -365,6 +365,11 @@
     semifinals; sports named in the plan: football [not in this tool], boys/girls basketball, volleyball,
     baseball, softball, boys/girls soccer); custom modes instead recommend
     8 &times; separated share of the field, rounded, kept between 1 and 4, merging at the Elite 8.
+    Classes, flags and enrollments are the official 2026-27 one-year cycle
+    (ihsa.org Enrollments &amp; Classifications, pulled Nov 2026, all three season pages); real sectional
+    assignments and brackets are the last completed postseason (2025-26), so a school whose class
+    changed between cycles — e.g. Peoria (Notre Dame) boys soccer, 3A then, 2A now — appears in its
+    current class on the Proposed side while last season's real bracket stays in its old class.
     Non-boundaried status comes from the official IHSA non-boundaried schools list (source_data/
     Non-Boundaried_Schools.xlsx); the 1.65&times; multiplier and success factor apply to non-boundaried
     programs (not just private), matching IHSA policy. Sources: 2025 girls flag
@@ -483,8 +488,8 @@ function bumpClass(sport,cls){
 // Rolling three-year windows for the success factor (see pull_state_finalists.py):
 // CUR is the window behind the season this data was built for (2025-26), NEXT is one
 // year further along. Update both every year the data gets refreshed.
-const SF_WINDOW_CUR=["2022-23","2023-24","2024-25"];
-const SF_WINDOW_NEXT=["2023-24","2024-25","2025-26"];
+const SF_WINDOW_CUR=["2023-24","2024-25","2025-26"];
+const SF_WINDOW_NEXT=["2024-25","2025-26","2026-27"];
 function finalistCount(school,sport,window){
   const years=school.fin&&school.fin[sport];
   if(!years) return 0;
