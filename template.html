@@ -26,9 +26,19 @@
   select{padding:7px 10px; border:1px solid var(--line); background:#fff; min-width:150px;}
   .rangewrap{display:flex; align-items:center; gap:10px;}
   .rangeval{font-variant-numeric:tabular-nums; font-weight:700; min-width:2ch; text-align:center;}
+  .chkwrap{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted); font-weight:400;
+           text-transform:none; letter-spacing:0; max-width:220px; cursor:pointer;}
+  .chkwrap input{cursor:pointer;}
   .recnote{font-size:12px; color:var(--good); font-weight:700; margin-top:4px;}
   .recnote.off{color:var(--muted); font-weight:400;}
   .fieldnote{margin-left:auto; text-align:right; font-size:13px; color:var(--muted);}
+  .advgroup{background:#fff; border:1px solid var(--line); padding:0 18px; margin-bottom:20px;}
+  .advgroup summary{padding:10px 0; font-size:12.5px; font-weight:700; letter-spacing:.06em;
+                     text-transform:uppercase; color:var(--muted); cursor:pointer;}
+  .advgroup summary:hover{color:var(--ink);}
+  .advgroup[open] summary{border-bottom:1px solid var(--line);}
+  .advgroupbody{display:flex; flex-wrap:wrap; gap:22px; padding:14px 0;}
+  .advgroupbody .chkwrap{max-width:420px;}
   .fieldnote strong{color:var(--ink); font-size:16px;}
   .caveat{display:none; background:#fdf6ec; border:1px solid #e3cfa4; padding:10px 14px;
           font-size:13.5px; margin-bottom:16px;}
@@ -57,9 +67,9 @@
   .detail th,.detail td{padding:3px 8px 3px 0; border:0; text-align:left; font-variant-numeric:tabular-nums;}
   .detail th{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); background:transparent;}
   .detail td.mi{text-align:right; white-space:nowrap;}
-  .detail tr.regrow td{padding-top:8px; font-weight:700; color:var(--muted); font-size:11px;
+  .detail tr.regrow td,.detail tr.subrow td{padding-top:8px; font-weight:700; color:var(--muted); font-size:11px;
                        letter-spacing:.06em; text-transform:uppercase; cursor:pointer;}
-  .detail tr.regrow td:hover{color:var(--ink); text-decoration:underline;}
+  .detail tr.regrow td:hover,.detail tr.subrow td:hover{color:var(--ink); text-decoration:underline;}
   .hostpick{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px;
             padding:8px 10px; background:#f6f4ef; border:1px solid var(--line); font-size:12.5px;}
   .hostpick label{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:700;}
@@ -67,6 +77,22 @@
   .hostpick input{width:110px;}
   .hostpick button{padding:4px 10px; font-size:12px;}
   .hostpick .hostnote{color:var(--good); font-weight:700; font-size:11.5px;}
+  .bracketBody{min-height:0;}
+  .bracketHalf h5{font-family:Georgia,serif; font-size:13.5px; margin:14px 0 2px; color:var(--ink);}
+  /* Rounds as side-by-side columns, matching ihsa.org's own bracket-page layout —
+     each column a vertically-stacked list of matchup cards, earliest round on the left. */
+  .bracketCols{display:flex; gap:16px; overflow-x:auto; padding-bottom:6px; align-items:flex-start;}
+  .bracketCol{flex:0 0 200px; min-width:180px;}
+  .bracketColName{font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted);
+                   font-weight:700; margin-bottom:6px;}
+  .bracketMatch{padding:6px 8px; margin-bottom:14px; background:#f6f4ef; border:1px solid var(--line);
+                font-size:13px;}
+  .bracketMatch.tbd,.bracketMatch.bye{color:var(--muted);}
+  .bracketTeam{padding:2px 0;}
+  .bracketTeam.winner{font-weight:700; color:var(--ink);}
+  .bracketTeam .seedTag{display:inline-block; min-width:1.4em; text-align:center; font-weight:700;
+                         color:var(--accent); font-variant-numeric:tabular-nums;}
+  .bracketHost{color:var(--muted); font-size:11px; margin-top:3px;}
   .modal-overlay{position:fixed; inset:0; background:rgba(30,42,56,.55); display:flex;
                  align-items:center; justify-content:center; z-index:1000; padding:20px;}
   .modal{background:#fff; border:1px solid var(--line); max-width:640px; width:100%;
@@ -78,6 +104,10 @@
   .modal table{margin-top:8px;}
   .modal table button{padding:3px 10px; font-size:11.5px;}
   .modal table tr.hl td{background:#fdf3f4;}
+  .modal table td.mi{text-align:right; white-space:nowrap;}
+  .worstSecBtn{background:none; color:var(--accent); font-weight:700; padding:0; border:0;
+                text-decoration:underline; cursor:pointer; font-size:inherit;}
+  .worstSecBtn:hover{background:none; color:var(--ink);}
   button.secondary{background:transparent; color:var(--ink); border:1px solid var(--line);}
   button.secondary:hover{background:#f3f1ec;}
   .detail .hostBtn,.detail .regHostBtn,.detail .moveBtn{padding:3px 10px; font-size:11.5px;}
@@ -93,6 +123,8 @@
   tr.hl td{background:#fdf3f4;}
   .privtag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.06em;
            color:#fff; background:var(--private); padding:1px 6px; border-radius:2px; margin-left:6px; vertical-align:1px;}
+  .nbtag{display:inline-block; font-size:10px; font-weight:700; letter-spacing:.06em;
+         color:#fff; background:#46608c; padding:1px 6px; border-radius:2px; margin-left:6px; vertical-align:1px;}
   .btnrow{margin:14px 0 0;}
   button{font:inherit; font-weight:700; background:var(--ink); color:#fff; border:0;
          padding:9px 16px; cursor:pointer;}
@@ -115,8 +147,12 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">IHSA State Series Proposal Analysis</div>
-    <h1>Postseason Scenario Explorer: Public / Private Separation Until the Final&nbsp;8</h1>
-    <div class="sub">Compares current sectional assignment against a proposed system where private schools
+    <h1>Postseason Scenario Explorer: Separate Paths for Non-Boundaried Schools</h1>
+    <div class="sub">Models the IHSA Competitive Balance Committee plan (and two custom variants) against the
+      current system: all non-boundaried schools in a class — official IHSA list — are placed in their own
+      quadrant of the state-series bracket (2 of 8 sectionals), so a public school cannot meet one before
+      the state semifinals and exactly one non-boundaried school reaches the final four per class.
+      Legacy framing, kept as a selectable variant: private schools
       compete on their own sectional paths and cannot meet a public school before the super-sectional
       round. For flag football, lacrosse, boys volleyball, and water polo the current side uses
       <strong>actual IHSA sectional assignments</strong>; other sports use a simulated geographic grouping.
@@ -126,7 +162,14 @@
   <div class="controls">
     <div class="ctl"><label>Sport</label><select id="sport"></select></div>
     <div class="ctl"><label>Class</label><select id="klass"></select></div>
-    <div class="ctl"><label>Private paths (of 8)</label>
+    <div class="ctl"><label>Separation basis</label>
+      <select id="sepmode">
+        <option value="committee" selected>Committee plan — NB quadrant</option>
+        <option value="nb">Non-boundaried — custom paths</option>
+        <option value="private">Private only — custom paths</option>
+      </select>
+      <div class="recnote off" id="sepnote"></div></div>
+    <div class="ctl"><label>Separated paths (of 8)</label>
       <div class="rangewrap"><input type="range" id="privpaths" min="1" max="4" value="1">
       <span class="rangeval" id="privpathsval">1</span></div>
       <div class="recnote" id="recnote"></div></div>
@@ -136,9 +179,17 @@
     <div class="fieldnote" id="fieldnote"></div>
   </div>
 
+  <details class="advgroup">
+    <summary>Advanced regional grouping</summary>
+    <div class="advgroupbody">
+      <label class="chkwrap"><input type="checkbox" id="subsecToggle"> <strong>Sub-sectionals</strong> — split each sectional into 2 geographic halves before regionals</label>
+    </div>
+  </details>
+
   <div class="tabs">
     <button class="tab active" id="tabScenario">Scenario Explorer</button>
     <button class="tab" id="tabData">Full Data</button>
+    <button class="tab" id="tabBracket">Bracket</button>
     <button class="tab" id="tabOverrides">Scenario Overrides</button>
     <button class="tab" id="tabSchools">Schools</button>
   </div>
@@ -150,12 +201,13 @@
       <div class="mapsub" id="cursub">All schools mixed &middot; 8 sectionals</div>
       <div class="mapfilters">
         <select id="secSelCurrent"></select>
+        <select id="subSelCurrent" style="display:none"></select>
         <select id="regSelCurrent"></select>
       </div>
       <div id="mapCurrent"></div>
       <div class="legend">
         <span class="key"><span class="dot"></span> Public</span>
-        <span class="key"><span class="dia"></span> Private</span>
+        <span class="key"><span class="dia"></span> Private / non-boundaried</span>
         <span class="key">Click a sectional, or use the filters</span>
       </div>
       <div class="detail" id="detCurrent"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
@@ -165,12 +217,13 @@
       <div class="mapsub" id="propsub"></div>
       <div class="mapfilters">
         <select id="secSelProposed"></select>
+        <select id="subSelProposed" style="display:none"></select>
         <select id="regSelProposed"></select>
       </div>
       <div id="mapProposed"></div>
       <div class="legend">
         <span class="key"><span class="dot"></span> Public sectionals</span>
-        <span class="key"><span class="dia"></span> Private-only path(s)</span>
+        <span class="key"><span class="dia"></span> Separated path(s)</span>
         <span class="key">Click a sectional, or use the filters</span>
       </div>
       <div class="detail" id="detProposed"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
@@ -178,7 +231,7 @@
   </div>
 
   <h3>Travel comparison</h3>
-  <div class="tblnote">One-way straight-line miles to the host site: the named IHSA host where assignments are actual, otherwise the most centrally located school in the group. &ldquo;Sectional&rdquo; is the round that determines the final 8.</div>
+  <div class="tblnote">One-way straight-line miles to the host site: the named IHSA host where assignments are actual, otherwise the most centrally located school in the group. &ldquo;Sectional&rdquo; is the round that determines the final 8; under the committee plan the two NB sectional winners then meet in the NB super-sectional, sending exactly one to the state semifinals.</div>
   <table class="stats" id="statTable"></table>
 
   <h3>Most-affected schools under the proposal</h3>
@@ -199,6 +252,23 @@
     </div>
     <table class="stats" id="dataTable"></table>
   </div><!-- /viewData -->
+
+  <div id="viewBracket" style="display:none">
+    <h3>Bracket</h3>
+    <div class="tblnote">Current shows the actual 2025-26 IHSA bracket for the selected sectional where one's on
+      file — real seeds, real matchups, every round — falling back to a modeled bracket when it isn't. Proposed
+      is always modeled: the best-rated team plays the lowest seed, the next-best plays the next-lowest, and so
+      on, keeping top-rated teams apart as long as possible; only the first round shows real matchups and
+      projected travel, since this tool doesn't simulate results, and later rounds show bracket structure only.
+      Modeled brackets use MaxPreps ratings (see the Schools tab); sports without rating data show a note
+      instead. Respects the Scenario Explorer's Sub-sectionals toggle — when on, a modeled bracket's field
+      splits into two independently-seeded halves that meet in one final.</div>
+    <div class="mapfilters">
+      <select id="bracketSystem"><option value="Current">Current system</option><option value="Proposed">Proposed system</option></select>
+      <select id="bracketSelSingle"></select>
+    </div>
+    <div id="bracketSingle" class="detail bracketBody"><span class="hint">Select a sectional to see its bracket.</span></div>
+  </div><!-- /viewBracket -->
 
   <div id="viewOverrides" style="display:none">
     <h3>Scenario overrides</h3>
@@ -277,7 +347,7 @@
     <h4 style="margin-top:20px;">School list</h4>
     <div class="datatools">
       <input type="search" id="schoolsSearch" placeholder="Filter by school…">
-      <select id="schoolsTypeFilter"><option value="">All types</option><option value="1">Private</option><option value="0">Public</option></select>
+      <select id="schoolsTypeFilter"><option value="">All types</option><option value="private">Private</option><option value="nbpub">Public (non-boundaried)</option><option value="public">Public (boundaried)</option></select>
       <select id="schoolsClassFilter"><option value="">All classes</option></select>
       <span class="count" id="schoolsCount"></span>
       <button id="schoolsDl" style="margin-left:auto">Download CSV</button>
@@ -291,11 +361,16 @@
     regional subdivisions are always modeled at the chosen size. Travel is one-way straight-line distance to the host site: the named IHSA sectional host where
     assignments are actual, otherwise the most centrally located member school (host schools travel 0). Any sectional's host can be reassigned from its roster panel — to another member, any IHSA school, or a custom venue by address (geocoded via OpenStreetMap).
     School locations are city-level ZIP centroids, so figures understate true road miles by roughly
-    15&ndash;25% and Chicago-to-Chicago trips read as zero. Recommended private paths =
-    8 &times; private share of the field, rounded, kept between 1 and 4. Sources: 2025 girls flag
+    15&ndash;25% and Chicago-to-Chicago trips read as zero. Committee plan fixes the separated side at 2 of 8 sectionals (one quadrant, merging at the state
+    semifinals; sports named in the plan: football [not in this tool], boys/girls basketball, volleyball,
+    baseball, softball, boys/girls soccer); custom modes instead recommend
+    8 &times; separated share of the field, rounded, kept between 1 and 4, merging at the Elite 8.
+    Non-boundaried status comes from the official IHSA non-boundaried schools list (source_data/
+    Non-Boundaried_Schools.xlsx); the 1.65&times; multiplier and success factor apply to non-boundaried
+    programs (not just private), matching IHSA policy. Sources: 2025 girls flag
     football pairings; 2025&ndash;26 boys/girls lacrosse and boys volleyball assignments (Elgin and
-    O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools are
-    treated as public. Verify status flags marked for review before publication. Enrollment figures (Scenario
+    O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools separate with the
+    private schools except in the legacy private-only mode. Enrollment figures (Scenario
     Overrides tab) are each school's base ISBE-derived enrollment prior to any 1.65&times; success multiplier.
   </footer>
 </div>
@@ -304,6 +379,23 @@
 const RAW = __RAW_DATA_JSON__;
 const DATA = RAW.schools;
 const ASSIGN = RAW.assign;
+// --- Separation basis: who rides the separated postseason paths ---
+// "committee": the IHSA Competitive Balance Committee plan (Oct 2026) — every
+// non-boundaried school (official IHSA list, embedded per school as nb:1) in a class
+// is placed in its own QUADRANT of the state-series bracket: 2 of the 8 sectionals,
+// whose winners meet in the NB super-sectional, so exactly one NB school can reach
+// the state semifinals. Board policy; earliest effect 2027-28. No multiplier/success-
+// formula changes are part of the plan.
+// "nb": same population, custom path count (generalization for what-ifs).
+// "private": the original private-only proposal (merge at the Elite 8), kept for
+// comparison with earlier versions of this analysis.
+const COMMITTEE_SPORTS=new Set(["BKB","BKG","VBG","VBB","BA","SBG","SOB","SOG"]);
+function sepMode(){const el=document.getElementById("sepmode");return el?el.value:"committee";}
+function isNB(d){return d.nb===1||d.p===1;}
+function isSep(d){return sepMode()==="private"?d.p===1:isNB(d);}
+function sepLabel(){return sepMode()==="private"?"private":"non-boundaried";}
+function sepPathName(){return sepMode()==="private"?"Private path":"NB path";}
+function sepTag(d){return d&&d.p?'<span class="privtag">PRIVATE</span>':(d&&d.nb?'<span class="nbtag">NB</span>':"");}
 // ASSIGN[sport] is a flat sectional list for single-class sports (FLGG/LAXB/LAXG/
 // VBB/WPB/WPG — one shared list, no class dimension), or a {class: sectional-list}
 // dict for multi-class sports with real per-class assignments (e.g. SOB). This
@@ -379,7 +471,7 @@ function effectiveEnrollment(school,sport){
   // from "no override yet" — both would otherwise look like a falsy mult[sport].
   const explicit=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport)?o.mult[sport]:null;
   const official=officialMultState(school,sport);
-  const multOn=explicit!=null?explicit:(official!=null?official:school.p);
+  const multOn=explicit!=null?explicit:(official!=null?official:isNB(school));
   return multOn?base*multiplierValue:base;
 }
 function bumpClass(sport,cls){
@@ -402,7 +494,7 @@ function finalistCount(school,sport,window){
 // — this is the actual rule, not a guess: >=2 state-trophy (final-4) appearances in the
 // rolling window. Still overridable per school/sport in Scenario Overrides/Schools tab.
 function autoSuccessFactor(school,sport,window){
-  if(!school.p) return false;
+  if(!isNB(school)) return false;
   const useWindow=window||SF_WINDOW_CUR;
   // IHSA's own "success formula" flag is ground truth for the CURRENT window (it's a
   // same-year snapshot, so it can't speak to a future window) — trust it over
@@ -463,7 +555,7 @@ function effectiveClass(school,sport){
   const o=overrides[school.n];
   const explicitMult=o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sport);
   const hasEnOverride=o&&(o.en!=null||explicitMult);
-  const globalMultChanged=school.p&&multiplierValue!==OFFICIAL_MULTIPLIER;
+  const globalMultChanged=isNB(school)&&multiplierValue!==OFFICIAL_MULTIPLIER;
   const explicitSuccess=o&&o.success&&Object.prototype.hasOwnProperty.call(o.success,sport)?o.success[sport]:null;
   const autoSuccess=autoSuccessFactor(school,sport);
   const successOn=explicitSuccess!=null?explicitSuccess:autoSuccess;
@@ -488,7 +580,7 @@ function effectiveClass(school,sport){
 function nextYearClass(school,sport){
   const base=school.c[sport];
   if(!base||base==="S"||!CLASS_CUTOFFS[sport]) return base;
-  const en=school.p?(school.en!=null?school.en*OFFICIAL_MULTIPLIER:null):school.en;
+  const en=isNB(school)?(school.en!=null?school.en*OFFICIAL_MULTIPLIER:null):school.en;
   const enrollmentClass=predictClass(sport,en,base);
   return autoSuccessFactor(school,sport,SF_WINDOW_NEXT)?bumpClass(sport,enrollmentClass):enrollmentClass;
 }
@@ -509,6 +601,30 @@ function bisect(arr,n){
   return [...bisect(s.slice(0,k),nl),...bisect(s.slice(k),nr)];
 }
 
+// Snake-seeds arr into n groups by MaxPreps rating (rtg[sport], descending; schools
+// without a rating sort last): groups 0..n-1 take the top n teams in order, the next
+// n fill back in reverse, and so on — standard bracket seeding, which keeps every
+// group's average strength roughly level instead of stacking the best teams together.
+function snakeSeed(arr,n,sport){
+  if(n<=1||arr.length<=1) return [arr];
+  const rank=x=>(x.rtg&&x.rtg[sport]!=null)?x.rtg[sport]:-Infinity;
+  const s=[...arr].sort((a,b)=>rank(b)-rank(a));
+  const groups=Array.from({length:n},()=>[]);
+  s.forEach((x,i)=>{
+    const pos=i%n;
+    groups[Math.floor(i/n)%2?n-1-pos:pos].push(x);
+  });
+  return groups;
+}
+// The innermost regional-forming split: geographic bisection unless a seed sport is
+// given AND at least one member actually has a rating for it (WPB/WPG/FLGG have no
+// rating data at all — the toggle silently falls back there rather than "seeding"
+// all-missing values). Sectional/sub-sectional membership stays geographic regardless.
+function splitRegs(members,n,seedSport){
+  return seedSport&&members.some(m=>m.rtg&&m.rtg[seedSport]!=null)
+    ?snakeSeed(members,n,seedSport):bisect(members,n);
+}
+
 // host = the member school closest to the group's center (a real potential site),
 // unless a designated host is supplied (actual IHSA sectional hosts).
 function pickHost(members, hostName){
@@ -523,21 +639,130 @@ function pickHost(members, hostName){
   return best;
 }
 
-function metricsFor(groups, regSize, regHostLookup, baseIndex){
+// Standard recursive tournament seeding order — 1,16,8,9,4,13,5,12,2,15,7,10,3,14,6,11
+// for a 16-slot bracket — keeps seed 1 and 2 apart until the final, 1&3/1&4 apart
+// until the semis, etc. Returns seed NUMBERS (1-indexed) in bracket-slot order for
+// the given power-of-2 size.
+function bracketOrder(size){
+  let order=[1];
+  while(order.length<size){
+    const sum=2*order.length+1, next=[];
+    order.forEach(s=>{ next.push(s); next.push(sum-s); });
+    order=next;
+  }
+  return order;
+}
+
+// Builds a single-elimination bracket from `members`, seeded by rtg[sport]
+// descending (missing ratings sort last, same convention as snakeSeed). Byes land
+// on the top seeds when the field isn't a power of 2 (standard practice) — a bye's
+// opponent advances automatically, no game/travel that round. Only round 1 has real
+// matchups/hosts/distances, since there's no results engine to know who reaches
+// later rounds — those are structure-only, each side labeled by the best (lowest-
+// numbered) seed in that bracket section, which standard seeding order guarantees
+// is that section's intended top seed.
+function buildBracket(members,sport){
+  const ranked=[...members].sort((a,b)=>{
+    const ra=(a.rtg&&a.rtg[sport]!=null)?a.rtg[sport]:-Infinity;
+    const rb=(b.rtg&&b.rtg[sport]!=null)?b.rtg[sport]:-Infinity;
+    return rb-ra;
+  });
+  const n=ranked.length;
+  if(n<2) return {rounds:[], seeded:ranked.map((s,i)=>({seed:i+1,school:s}))};
+  let bSize=1; while(bSize<n) bSize*=2;
+  const order=bracketOrder(bSize);
+  const roundName=k=>k===2?"Final":k===4?"Semifinal":k===8?"Quarterfinal":`Round of ${k}`;
+  const rounds=[];
+  const r1=[];
+  for(let i=0;i<order.length;i+=2){
+    const seedA=order[i], seedB=order[i+1];
+    const a=seedA<=n?ranked[seedA-1]:null, b=seedB<=n?ranked[seedB-1]:null;
+    if(a&&b){
+      const host=pickHost([a,b]);
+      r1.push({seedA,teamA:a,seedB,teamB:b,bye:false,host:host.n,
+        miA:hav(a.la,a.lo,host.la,host.lo), miB:hav(b.la,b.lo,host.la,host.lo)});
+    }else{
+      r1.push({seedA:a?seedA:seedB, teamA:a||b, seedB:null, teamB:null, bye:true,
+        host:null, miA:null, miB:null});
+    }
+  }
+  rounds.push({name:roundName(bSize), matchups:r1});
+  for(let k=bSize/2; k>=2; k/=2){
+    const sectionSize=2*bSize/k;
+    const matchups=[];
+    for(let i=0;i<bSize;i+=sectionSize){
+      const left=order.slice(i,i+sectionSize/2), right=order.slice(i+sectionSize/2,i+sectionSize);
+      matchups.push({seedA:Math.min(...left), teamA:null, seedB:Math.min(...right), teamB:null,
+        bye:false, host:null, miA:null, miB:null});
+    }
+    rounds.push({name:roundName(k), matchups});
+  }
+  return {rounds, seeded:ranked.map((s,i)=>({seed:i+1,school:s}))};
+}
+
+// A sectional's full bracket. Sub-sectionals (see the toggle in the Scenario
+// Explorer) split the field geographically into 2 halves FIRST — same bisect()
+// used for regional grouping — each half gets its own independent bracket, and the
+// two halves' (unresolved) champions meet in one final game hosted at the
+// sectional's own host. Without sub-sectionals, buildBracket()'s own last round
+// already IS the sectional final — nothing extra to append.
+function buildSectionalBracket(members, sport, subOn, secHostName){
+  if(subOn && members.length>=2){
+    const [halfA,halfB]=bisect(members,2);
+    return {
+      subBrackets:[buildBracket(halfA,sport), buildBracket(halfB,sport)],
+      finalRound:{name:"Sectional Final",
+        matchups:[{seedA:null,teamA:null,seedB:null,teamB:null,bye:false,
+          host:secHostName||null, miA:null, miB:null}]}
+    };
+  }
+  return {rounds:buildBracket(members,sport).rounds};
+}
+
+// subOpts = {enabled, hostLookup(trueGi,hi)} — when enabled, each sectional's members
+// are bisected into 2 geographic halves FIRST, then each half is bisected into its own
+// regionals independently (regional numbering stays flat/sequential across the whole
+// sectional so every other place that reads r.reg as a simple per-sectional index —
+// filters, the roster table's regional dividers — needs no changes). When disabled,
+// behavior/row shape for sec/reg/secMi/regMi is unchanged and sub/subHost/subMi are null.
+// seedSport (optional) switches only the innermost regional split to rating snake-
+// seeding — see splitRegs(); sectional/sub-sectional formation is untouched.
+function metricsFor(groups, regSize, regHostLookup, baseIndex, subOpts, seedSport){
   baseIndex=baseIndex||0;
   const rows=[];
   groups.forEach((g,gi)=>{
     if(!g.members.length) return;
     const trueGi=baseIndex+gi;
     const secHost=g.hostLoc ? g.hostLoc : pickHost(g.members, g.host);
-    const nReg=Math.max(1,Math.round(g.members.length/regSize));
-    const regs=bisect(g.members,nReg);
+    const useSub=subOpts&&subOpts.enabled&&g.members.length>=2;
+    let regs=[], subOf=[];
+    if(useSub){
+      bisect(g.members,2).forEach((half,hi)=>{
+        if(!half.length) return;
+        const nReg=Math.max(1,Math.round(half.length/regSize));
+        splitRegs(half,nReg,seedSport).forEach(reg=>{ regs.push(reg); subOf.push(hi); });
+      });
+    }else{
+      const nReg=Math.max(1,Math.round(g.members.length/regSize));
+      regs=splitRegs(g.members,nReg,seedSport);
+      subOf=regs.map(()=>null);
+    }
+    const subHosts=useSub?[0,1].map(hi=>{
+      const members=regs.filter((_,ri)=>subOf[ri]===hi).flat();
+      if(!members.length) return null;
+      const override=subOpts.hostLookup&&subOpts.hostLookup(trueGi,hi);
+      return override?override:pickHost(members);
+    }):null;
     regs.forEach((reg,ri)=>{
       const override=regHostLookup&&regHostLookup(trueGi,ri);
       const regHost=override?override:pickHost(reg);
+      const subIdx=subOf[ri];
+      const subHost=subHosts?subHosts[subIdx]:null;
       reg.forEach(x=>rows.push({s:x, sec:trueGi, secName:g.name, reg:ri,
+        sub:subIdx, subHost:subHost?subHost.n:null,
         secHost:secHost.n, regHost:regHost.n,
-        secMi:hav(x.la,x.lo,secHost.la,secHost.lo), regMi:hav(x.la,x.lo,regHost.la,regHost.lo)}));
+        secMi:hav(x.la,x.lo,secHost.la,secHost.lo), regMi:hav(x.la,x.lo,regHost.la,regHost.lo),
+        subMi:subHost?hav(x.la,x.lo,subHost.la,subHost.lo):null}));
     });
   });
   return rows;
@@ -550,10 +775,100 @@ function simGroups(field,n,label){
 function summarize(rows){
   if(!rows.length) return null;
   const sm=rows.map(r=>r.secMi), rm=rows.map(r=>r.regMi);
+  const um=rows.filter(r=>r.subMi!=null).map(r=>r.subMi);
   const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
   return {n:rows.length, regMean:mean(rm), regMax:Math.max(...rm),
           secMean:mean(sm), secMax:Math.max(...sm),
+          subMean:um.length?mean(um):null, subMax:um.length?Math.max(...um):null,
           over75:sm.filter(x=>x>75).length, over150:sm.filter(x=>x>150).length};
+}
+
+// "Do the best teams avoid each other in early rounds?" — for each sectional, take
+// its own top-N rated members (N = however many regionals it split into, or however
+// many rated members exist if fewer) and count how many DISTINCT regionals they
+// land in. A pure snake-seed across an unconstrained field always scores 100% here
+// by construction; geographic splitting (or a geography-first sub-sectional half)
+// can score lower whenever top-rated teams happen to be geographically close
+// together — that's the real effect this metric is meant to surface, not paper
+// over. Sectionals with fewer than 2 regionals, or with zero rated members, don't
+// count toward the aggregate (excluded from both numerator and denominator, not
+// scored as 0%).
+function topTeamSeparation(rows,sport){
+  if(!sport) return null;
+  const bySec={};
+  rows.forEach(r=>{ (bySec[r.sec]=bySec[r.sec]||[]).push(r); });
+  let num=0,den=0;
+  Object.values(bySec).forEach(secRows=>{
+    const nReg=new Set(secRows.map(r=>r.reg)).size;
+    if(nReg<2) return;
+    const ranked=secRows.filter(r=>r.s.rtg&&r.s.rtg[sport]!=null)
+      .sort((a,b)=>b.s.rtg[sport]-a.s.rtg[sport]);
+    if(!ranked.length) return;
+    const n=Math.min(nReg,ranked.length);
+    const distinct=new Set(ranked.slice(0,n).map(r=>r.reg)).size;
+    num+=distinct; den+=n;
+  });
+  return den?100*num/den:null;
+}
+
+// A different failure mode than topTeamSeparation(): even when every top-rated
+// team lands in its own regional, sub-sectionals could still stack most or all of
+// them into the SAME half — e.g. a sectional's top 3 rated teams all geographically
+// close together in one half, leaving the other half's best team a distant 4th —
+// making one half a gauntlet and the other a cakewalk to the sectional final. Takes
+// the same "top nReg rated teams" topTeamSeparation() looks at, and instead checks
+// how they split between the two sub-sectional halves: 50% is an even split (half
+// the top teams in each half, matching how regionals themselves split ~evenly),
+// 100% means all of them landed in one half. Returns {avg, worst, worstDetail}
+// across every sectional with sub-sectional data — avg for the overall tendency,
+// worst for the single most lopsided sectional in the field (the kind of case
+// worth calling out by name, not averaged away), worstDetail its full roster split
+// (both halves' full membership, with the top-N teams flagged) for the "what does
+// this actually look like" drill-down in the stat table.
+function subBalance(rows,sport){
+  if(!sport) return null;
+  const bySec={};
+  rows.forEach(r=>{ if(r.sub==null) return; (bySec[r.sec]=bySec[r.sec]||[]).push(r); });
+  const shares=[];
+  let worst=-1, worstDetail=null;
+  Object.values(bySec).forEach(secRows=>{
+    const nReg=new Set(secRows.map(r=>r.reg)).size;
+    if(nReg<2) return;
+    const ranked=secRows.filter(r=>r.s.rtg&&r.s.rtg[sport]!=null)
+      .sort((a,b)=>b.s.rtg[sport]-a.s.rtg[sport]);
+    if(ranked.length<2) return;
+    const n=Math.min(nReg,ranked.length);
+    const top=ranked.slice(0,n);
+    const halves={};
+    top.forEach(r=>{ halves[r.sub]=(halves[r.sub]||0)+1; });
+    const share=100*Math.max(...Object.values(halves))/n;
+    shares.push(share);
+    if(share>worst){
+      worst=share;
+      const topNames=new Set(top.map(r=>r.s.n));
+      worstDetail={secName:secRows[0].secName, n,
+        halves:[0,1].map(h=>secRows.filter(r=>r.sub===h)
+          .map(r=>({n:r.s.n, p:r.s.p, nb:r.s.nb, rtg:r.s.rtg&&r.s.rtg[sport]!=null?r.s.rtg[sport]:null, top:topNames.has(r.s.n)}))
+          .sort((a,b)=>(b.rtg==null?-Infinity:b.rtg)-(a.rtg==null?-Infinity:a.rtg)))};
+    }
+  });
+  if(!shares.length) return null;
+  return {avg:shares.reduce((s,x)=>s+x,0)/shares.length, worst, worstDetail};
+}
+
+// Re-runs metricsFor() over already-built groups with a different subOpts.enabled /
+// seedSport than the live run — used only for the fairness comparisons below, which
+// need to show "what would the OTHER toggle state have produced" without disturbing
+// the actual displayed maps/overrides.
+function computeRows(curGroups,propGroups,R,subOn,seed){
+  const curRows=metricsFor(curGroups,R,(si,ri)=>regHostOverrides.Current[`${si}:${ri}`],0,
+    {enabled:subOn,hostLookup:(si,hi)=>subHostOverrides.Current[`${si}:${hi}`]},seed);
+  const propRows=[];
+  propGroups.forEach((g,gi)=>{
+    metricsFor([g],R,(si,ri)=>regHostOverrides.Proposed[`${si}:${ri}`],gi,
+      {enabled:subOn,hostLookup:(si,hi)=>subHostOverrides.Proposed[`${si}:${hi}`]},seed).forEach(r=>propRows.push(r));
+  });
+  return {cur:curRows, prop:propRows};
 }
 
 function proj(la,lo,W,H,pad){
@@ -571,13 +886,16 @@ function hull(pts){
   return lo.slice(0,-1).concat(up.slice(0,-1));
 }
 
-const mapState = {Current:{rows:[],sec:null,reg:null}, Proposed:{rows:[],sec:null,reg:null}};
+const mapState = {Current:{rows:[],sec:null,sub:null,reg:null}, Proposed:{rows:[],sec:null,sub:null,reg:null}};
 let hostOverrides = {Current:{}, Proposed:{}};
 // regHostOverrides[which]["si:ri"] = host — regionals have no persistent identity across
 // runs (recomputed geographically every time), but "regional ri within sectional si" is
 // stable WITHIN one sport/class/P/R combo, since bisect() is a pure function of the
 // sectional's membership — same reset-on-signature-change treatment as hostOverrides below.
 let regHostOverrides = {Current:{}, Proposed:{}};
+// subHostOverrides[which]["si:hi"] = host — same idea one level up: "sub-sectional hi
+// within sectional si" (hi is 0 or 1) is stable within one sport/class/P/R/toggle combo.
+let subHostOverrides = {Current:{}, Proposed:{}};
 let lastSig = "";
 
 function drawMap(which){
@@ -599,6 +917,18 @@ function drawMap(which){
         fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-opacity="${secDim(si)?0.15:0.5}" stroke-width="${+si===st.sec?2:1}"/>`;
     }
   });
+  // sub-sectional sub-hull when a sub-sectional is selected (dashed wider than the
+  // regional one below so both read distinctly when a regional within it is also picked)
+  if(st.sec!==null&&st.sub!==null&&bySec[st.sec]){
+    const col=HUES[st.sec%HUES.length];
+    const g=bySec[st.sec].filter(r=>r.sub===st.sub);
+    const pts=g.map(r=>proj(r.s.la,r.s.lo,W,H,pad));
+    if(pts.length>=3){
+      const h=hull(pts);
+      svg+=`<path d="M${h.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")}Z"
+        fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="2" stroke-dasharray="7 3" pointer-events="none"/>`;
+    }
+  }
   // regional sub-hull when a regional is selected
   if(st.sec!==null&&st.reg!==null&&bySec[st.sec]){
     const col=HUES[st.sec%HUES.length];
@@ -616,10 +946,11 @@ function drawMap(which){
     g.forEach(r=>{
       let pop=1;
       if(secDim(si)) pop=0.15;
+      else if(st.sec!==null&&st.sub!==null&&r.sub!==st.sub) pop=0.35;
       else if(st.sec!==null&&st.reg!==null&&r.reg!==st.reg) pop=0.35;
       const[x,y]=proj(r.s.la,r.s.lo,W,H,pad);
       const t=`<title>${r.s.n} — ${r.secName}, Regional ${r.reg+1} — ${r.regMi.toFixed(0)} mi to regional host (${r.regHost}), ${r.secMi.toFixed(0)} mi to sectional host (${r.secHost})</title>`;
-      if(r.s.p){
+      if(isSep(r.s)){
         svg+=`<rect class="grp" data-sec="${si}" x="${(x-3.4).toFixed(1)}" y="${(y-3.4).toFixed(1)}" width="6.8" height="6.8"
           transform="rotate(45 ${x.toFixed(1)} ${y.toFixed(1)})" fill="#9e1b32" opacity="${pop}" stroke="#fff" stroke-width="0.8">${t}</rect>`;
       }else{
@@ -633,8 +964,8 @@ function drawMap(which){
   el.innerHTML=svg;
   el.querySelector("svg").addEventListener("click",e=>{
     const g=e.target.closest(".grp");
-    if(!g){setSel(which,null,null);return;}
-    setSel(which,+g.dataset.sec,null);
+    if(!g){setSel(which,null,null,null);return;}
+    setSel(which,+g.dataset.sec,null,null);
   });
 }
 
@@ -649,21 +980,38 @@ function fillFilters(which){
   const sSel=document.getElementById("secSel"+which);
   sSel.innerHTML=`<option value="">All sectionals</option>`+
     secs.map(si=>`<option value="${si}"${st.sec===si?" selected":""}>${secName(which,si)}</option>`).join("");
+
+  const subEnabled=st.rows.some(r=>r.sub!=null);
+  const subSel=document.getElementById("subSel"+which);
+  if(!subEnabled||st.sec===null){
+    subSel.style.display="none";
+    subSel.disabled=true;
+    subSel.innerHTML=`<option value="">All sub-sectionals</option>`;
+  }else{
+    subSel.style.display="";
+    subSel.disabled=false;
+    const subs=[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.sub))].sort((a,b)=>a-b);
+    subSel.innerHTML=`<option value="">All sub-sectionals</option>`+
+      subs.map(hi=>`<option value="${hi}"${st.sub===hi?" selected":""}>Sub-sectional ${hi+1}</option>`).join("");
+  }
+
   const rSel=document.getElementById("regSel"+which);
   if(st.sec===null){
     rSel.innerHTML=`<option value="">All regionals</option>`;
     rSel.disabled=true;
   }else{
-    const regs=[...new Set(st.rows.filter(r=>r.sec===st.sec).map(r=>r.reg))].sort((a,b)=>a-b);
+    let regRows=st.rows.filter(r=>r.sec===st.sec);
+    if(subEnabled&&st.sub!==null) regRows=regRows.filter(r=>r.sub===st.sub);
+    const regs=[...new Set(regRows.map(r=>r.reg))].sort((a,b)=>a-b);
     rSel.disabled=false;
     rSel.innerHTML=`<option value="">All regionals</option>`+
       regs.map(ri=>`<option value="${ri}"${st.reg===ri?" selected":""}>Regional ${ri+1}</option>`).join("");
   }
 }
 
-function setSel(which,sec,reg){
+function setSel(which,sec,sub,reg){
   const st=mapState[which];
-  st.sec=sec; st.reg=reg;
+  st.sec=sec; st.sub=sub; st.reg=reg;
   fillFilters(which); drawMap(which); renderDetail(which);
 }
 
@@ -671,48 +1019,68 @@ function renderDetail(which){
   const st=mapState[which], el=document.getElementById("det"+which);
   if(st.sec===null){el.innerHTML='<span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span>';return;}
   let rows=st.rows.filter(r=>r.sec===st.sec);
+  const subEnabled=rows.some(r=>r.sub!=null);
+  if(st.sub!==null) rows=rows.filter(r=>r.sub===st.sub);
   if(st.reg!==null) rows=rows.filter(r=>r.reg===st.reg);
-  rows.sort((a,b)=>a.reg-b.reg||b.secMi-a.secMi);
+  rows.sort((a,b)=>a.sub-b.sub||a.reg-b.reg||b.secMi-a.secMi);
   if(!rows.length){el.innerHTML='<span class="hint">No schools in this group.</span>';return;}
-  const nPriv=rows.filter(r=>r.s.p).length;
+  const nPriv=rows.filter(r=>isSep(r.s)).length;
   const secMean=rows.reduce((s,r)=>s+r.secMi,0)/rows.length;
-  const title=secName(which,st.sec)+(st.reg!==null?` — Regional ${st.reg+1}`:"");
+  const title=secName(which,st.sec)
+    +(st.sub!==null?` — Sub-sectional ${st.sub+1}`:"")
+    +(st.reg!==null?` — Regional ${st.reg+1}`:"");
   const ov=hostOverrides[which][st.sec];
   let h=`<h4>${title}</h4>
-    <div class="dmeta">${rows.length} schools &middot; ${nPriv} private &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi
+    <div class="dmeta">${rows.length} schools &middot; ${nPriv} ${sepLabel()} &middot; host: ${rows[0].secHost}${ov?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${secMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.secMi)).toFixed(0)} mi
     <button class="secondary hostBtn" style="margin-left:10px;">Change host&hellip;</button></div>`;
+  if(st.sub!==null){
+    const subOv=subHostOverrides[which][`${st.sec}:${st.sub}`];
+    const subMean=rows.reduce((s,r)=>s+r.subMi,0)/rows.length;
+    h+=`<div class="dmeta">Sub-sectional ${st.sub+1} host: ${rows[0].subHost}${subOv?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${subMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.subMi)).toFixed(0)} mi
+    <button class="secondary subHostBtn" style="margin-left:10px;">Change host&hellip;</button></div>`;
+  }
   if(st.reg!==null){
     const regOv=regHostOverrides[which][`${st.sec}:${st.reg}`];
     const regMean=rows.reduce((s,r)=>s+r.regMi,0)/rows.length;
     h+=`<div class="dmeta">host: ${rows[0].regHost}${regOv?' <span class="hostnote">(custom)</span>':''} &middot; avg travel to host ${regMean.toFixed(0)} mi &middot; max ${Math.max(...rows.map(r=>r.regMi)).toFixed(0)} mi
     <button class="secondary regHostBtn" style="margin-left:10px;">Change host&hellip;</button></div>`;
   }
-  h+=`<table><tr><th>School</th><th style="text-align:right">Regional mi</th><th style="text-align:right">Sectional mi</th><th>Sectional</th></tr>`;
-  let lastReg=-1;
+  const nCols=subEnabled?5:4;
+  h+=`<table><tr><th>School</th><th style="text-align:right">Regional mi</th>${subEnabled?'<th style="text-align:right">Sub-sectional mi</th>':""}<th style="text-align:right">Sectional mi</th><th>Sectional</th></tr>`;
+  let lastSub=-1, lastReg=-1;
   const sp=$("sport").value;
   rows.forEach(r=>{
+    if(st.sub===null&&r.sub!=null&&r.sub!==lastSub){
+      h+=`<tr class="subrow"><td colspan="${nCols}" data-sub="${r.sub}">Sub-sectional ${r.sub+1} — click to filter</td></tr>`;
+      lastSub=r.sub;
+    }
     if(st.reg===null&&r.reg!==lastReg){
-      h+=`<tr class="regrow"><td colspan="4" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
+      h+=`<tr class="regrow"><td colspan="${nCols}" data-reg="${r.reg}">Regional ${r.reg+1} — click to filter</td></tr>`;
       lastReg=r.reg;
     }
     const so=overrides[r.s.n]&&overrides[r.s.n].sectional&&overrides[r.s.n].sectional[sp];
     const moved=so&&so[which];
     const esc=r.s.n.replace(/"/g,"&quot;");
-    h+=`<tr><td>${r.s.n}${r.s.p?'<span class="privtag">PRIVATE</span>':""}</td>
-      <td class="mi">${r.regMi.toFixed(0)}</td><td class="mi">${r.secMi.toFixed(0)}</td>
+    h+=`<tr><td>${r.s.n}${sepTag(r.s)}</td>
+      <td class="mi">${r.regMi.toFixed(0)}</td>${subEnabled?`<td class="mi">${r.subMi!=null?r.subMi.toFixed(0):"—"}</td>`:""}<td class="mi">${r.secMi.toFixed(0)}</td>
       <td><button class="secondary moveBtn" data-school="${esc}">Move&hellip;</button>${moved?' <span class="hostnote">(moved)</span>':""}</td></tr>`;
   });
   el.innerHTML=h+"</table>";
+  el.querySelectorAll("tr.subrow td").forEach(td=>{
+    td.onclick=()=>setSel(which,st.sec,+td.dataset.sub,null);
+  });
   el.querySelectorAll("tr.regrow td").forEach(td=>{
-    td.onclick=()=>setSel(which,st.sec,+td.dataset.reg);
+    td.onclick=()=>setSel(which,st.sec,st.sub,+td.dataset.reg);
   });
   el.querySelectorAll(".moveBtn").forEach(btn=>{
     btn.onclick=()=>openMoveModal(which, btn.dataset.school);
   });
   const hostBtn=el.querySelector(".hostBtn");
-  if(hostBtn) hostBtn.onclick=()=>openHostPicker(which, st.sec);
+  if(hostBtn) hostBtn.onclick=()=>openHostPicker(which, {sec:st.sec});
+  const subHostBtn=el.querySelector(".subHostBtn");
+  if(subHostBtn) subHostBtn.onclick=()=>openHostPicker(which, {sec:st.sec, sub:st.sub});
   const regHostBtn=el.querySelector(".regHostBtn");
-  if(regHostBtn) regHostBtn.onclick=()=>openHostPicker(which, st.sec, st.reg);
+  if(regHostBtn) regHostBtn.onclick=()=>openHostPicker(which, {sec:st.sec, sub:st.sub, reg:st.reg});
 }
 
 // ---- modal infrastructure: a single overlay at a time, dismissed by backdrop click,
@@ -736,11 +1104,20 @@ function openModal(innerHtml, onMount){
   return wrap;
 }
 
-// Resolves a sectional's current effective host to {n,la,lo} — a stored override
-// (member or custom venue, both carry coordinates already) or, failing that, the
-// real school named in the row data (works for both actual IHSA hosts and the
-// closest-to-centroid pick, since both are always real member schools).
-function hostCoordsFor(which, si){
+// Resolves a sectional's (or, when `sub` is given, a sub-sectional's) current
+// effective host to {n,la,lo} — a stored override (member or custom venue, both carry
+// coordinates already) or, failing that, the real school named in the row data (works
+// for both actual IHSA hosts and the closest-to-centroid pick, since both are always
+// real member schools).
+function hostCoordsFor(which, si, sub){
+  if(sub!=null){
+    const ov=subHostOverrides[which][`${si}:${sub}`];
+    if(ov) return {n:ov.n, la:ov.la, lo:ov.lo};
+    const r=mapState[which].rows.find(r=>r.sec===si&&r.sub===sub);
+    if(!r||!r.subHost) return null;
+    const s=byName[r.subHost];
+    return s? {n:r.subHost, la:s.la, lo:s.lo} : null;
+  }
   const ov=hostOverrides[which][si];
   if(ov) return {n:ov.n, la:ov.la, lo:ov.lo};
   const r=mapState[which].rows.find(r=>r.sec===si);
@@ -749,9 +1126,30 @@ function hostCoordsFor(which, si){
   return s? {n:r.secHost, la:s.la, lo:s.lo} : null;
 }
 
-function renderHostPreview(container, rows, isReg, candidate){
+// Drill-down for the stat table's "worst sectional" balance figure — shows exactly
+// which schools landed in which sub-sectional half for that one sectional, with the
+// top-rated teams driving the metric flagged so it's clear why the split scored the
+// way it did (see subBalance() for how `detail` is built).
+function openBalanceDetail(detail, which){
+  if(!detail) return;
+  const half=(list,label)=>{
+    const rows=list.map(t=>`<tr${t.top?' class="hl"':""}><td>${t.n}${sepTag(t)}${t.top?' <span class="hostnote">top-rated</span>':""}</td>
+      <td class="mi">${t.rtg!=null?t.rtg.toFixed(1):"—"}</td></tr>`).join("");
+    return `<div class="mapcard"><h2>${label}</h2><table><tr><th>School</th><th style="text-align:right">Rating</th></tr>${rows}</table></div>`;
+  };
+  const counts=detail.halves.map(h=>h.filter(t=>t.top).length);
+  openModal(`<h3>${detail.secName} <span class="hint">(${which})</span></h3>
+    <div class="modal-body">
+      <p class="dmeta">This sectional's top ${detail.n} rated team${detail.n===1?"":"s"} — the same group "Top teams kept in separate regionals" tracks — split ${counts.join("&ndash;")} between the two sub-sectional halves.</p>
+      <div class="maps">${half(detail.halves[0],"Sub-sectional 1")}${half(detail.halves[1],"Sub-sectional 2")}</div>
+    </div>
+    <div class="modal-foot"><button class="secondary" id="balCloseBtn">Close</button></div>`,
+    wrap=>{ wrap.querySelector("#balCloseBtn").onclick=closeModal; });
+}
+
+function renderHostPreview(container, rows, baselineKey, candidate){
   if(!candidate){ container.innerHTML='<div class="dmeta">Pick a host site above to preview travel distances.</div>'; return; }
-  const dd=rows.map(r=>({s:r.s, cur:isReg?r.regMi:r.secMi, next:hav(r.s.la,r.s.lo,candidate.la,candidate.lo)}))
+  const dd=rows.map(r=>({s:r.s, cur:r[baselineKey], next:hav(r.s.la,r.s.lo,candidate.la,candidate.lo)}))
                .sort((a,b)=>b.next-a.next);
   const mean=dd.reduce((s,d)=>s+d.next,0)/dd.length;
   const max=Math.max(...dd.map(d=>d.next));
@@ -767,18 +1165,27 @@ function renderHostPreview(container, rows, isReg, candidate){
   container.innerHTML=h+"</table>";
 }
 
-// Pop-up host picker shared by sectional (ri omitted) and regional (ri given) levels.
-// Choosing a candidate previews every school's distance to it live; nothing is
-// committed to hostOverrides/regHostOverrides until "Save selection" is clicked.
-function openHostPicker(which, si, ri){
-  const isReg=ri!=null;
+// Pop-up host picker shared by all three levels: sectional (sel={sec}), sub-sectional
+// (sel={sec,sub}), and regional (sel={sec,sub,reg} — sub is optional context for the
+// label only, since reg is already a flat unique index within the sectional). Takes an
+// options object rather than positional args specifically so a caller can't
+// accidentally pass a regional index into a sub-sectional slot or vice versa. Choosing
+// a candidate previews every school's distance to it live; nothing is committed to
+// hostOverrides/subHostOverrides/regHostOverrides until "Save selection" is clicked.
+function openHostPicker(which, sel){
+  const si=sel.sec, sub=sel.sub, reg=sel.reg;
+  const level = reg!=null ? "reg" : (sub!=null ? "sub" : "sec");
   let rows=mapState[which].rows.filter(r=>r.sec===si);
-  if(isReg) rows=rows.filter(r=>r.reg===ri);
+  if(sub!=null) rows=rows.filter(r=>r.sub===sub);
+  if(reg!=null) rows=rows.filter(r=>r.reg===reg);
   if(!rows.length) return;
-  const groupLabel=isReg?`${secName(which,si)} — Regional ${ri+1}`:secName(which,si);
-  const curHostName=isReg?rows[0].regHost:rows[0].secHost;
-  const ovStore=isReg?regHostOverrides[which]:hostOverrides[which];
-  const ovKey=isReg?`${si}:${ri}`:si;
+  const groupLabel = level==="reg"
+    ? `${secName(which,si)}${sub!=null?` — Sub-sectional ${sub+1}`:""} — Regional ${reg+1}`
+    : level==="sub" ? `${secName(which,si)} — Sub-sectional ${sub+1}` : secName(which,si);
+  const baselineKey = level==="reg"?"regMi":(level==="sub"?"subMi":"secMi");
+  const curHostName = level==="reg"?rows[0].regHost:(level==="sub"?rows[0].subHost:rows[0].secHost);
+  const ovStore = level==="reg"?regHostOverrides[which]:(level==="sub"?subHostOverrides[which]:hostOverrides[which]);
+  const ovKey = level==="reg"?`${si}:${reg}`:(level==="sub"?`${si}:${sub}`:si);
   const ov=ovStore[ovKey];
   const hasOv=!!ov;
   const members=[...new Set(rows.map(r=>r.s.n))].sort();
@@ -814,7 +1221,7 @@ function openHostPicker(which, si, ri){
     const sel=wrap.querySelector("#modalHostSel");
     const extra=wrap.querySelector("#modalHostExtra");
     const preview=wrap.querySelector("#modalHostPreview");
-    const refresh=()=>renderHostPreview(preview, rows, isReg, candidate);
+    const refresh=()=>renderHostPreview(preview, rows, baselineKey, candidate);
     refresh();
     if(hasOv&&ov.custom) extra.innerHTML=`<span class="fieldnote">Current custom venue: ${ov.n} — pick "Custom venue" again to change it.</span>`;
     sel.onchange=()=>{
@@ -1076,19 +1483,48 @@ function applySectionalOverrides(groups,sp,which){
 function run(){
   const sp=$("sport").value, kl=$("klass").value;
   const P=+$("privpaths").value, R=+$("regsize").value;
+  const subEnabled=$("subsecToggle").checked;
   const field=DATA.filter(d=>effectiveClass(d,sp)===kl);
-  const priv=field.filter(d=>d.p), pub=field.filter(d=>!d.p);
-  $("fieldnote").innerHTML=`<strong>${field.length}</strong> teams in field<br>${pub.length} public &middot; ${priv.length} private`;
-  $("propsub").textContent=`${8-P} public sectionals + ${P} private-only path${P>1?"s":""}`;
+  // Rating-seeding is the default whenever the sport has any coverage — no toggle;
+  // splitRegs() re-checks coverage per split too (a sport could have SOME coverage
+  // overall but a particular sectional/half with none), this just drives whether
+  // the rating columns render at all.
+  const hasRating=field.some(d=>d.rtg&&d.rtg[sp]!=null);
+  const ratingCols=hasRating;
+  const seedSport=hasRating?sp:null;
+  const priv=field.filter(isSep), pub=field.filter(d=>!isSep(d));
+  $("fieldnote").innerHTML=`<strong>${field.length}</strong> teams in field<br>${pub.length} public-side &middot; ${priv.length} ${sepLabel()}`;
+  const committee=sepMode()==="committee";
+  $("propsub").textContent=committee
+    ?`6 public sectionals (3 quadrants) + 2 non-boundaried sectionals (1 quadrant) — paths merge at the state semifinals`
+    :`${8-P} public sectionals + ${P} ${sepLabel()}-only path${P>1?"s":""} — paths merge at the Elite 8`;
+  $("sepnote").textContent=committee
+    ?(COMMITTEE_SPORTS.has(sp)?"Competitive Balance Committee plan — board policy, earliest 2027-28"
+      :"Sport not named in the committee plan — modeled under the same structure")
+    :"";
 
-  const rec=recommendPaths(field,priv);
+  const rec=committee?2:recommendPaths(field,priv);
   const share=field.length?(100*priv.length/field.length):0;
-  $("recnote").className="recnote"+(P===rec?"":" off");
-  $("recnote").textContent=`Recommended: ${rec} of 8 (${share.toFixed(0)}% private)`+(P===rec?"":` — showing ${P}`);
+  if(committee){
+    $("recnote").className="recnote";
+    $("recnote").textContent=`NB quadrant: 2 of 8 fixed (${share.toFixed(0)}% ${sepLabel()}) — one NB semifinalist`;
+  }else{
+    $("recnote").className="recnote"+(P===rec?"":" off");
+    $("recnote").textContent=`Recommended: ${rec} of 8 (${share.toFixed(0)}% ${sepLabel()})`+(P===rec?"":` — showing ${P}`);
+  }
 
-  const sig=sp+"|"+kl+"|"+P+"|"+R;
+  // Sub-sectional toggle changes each sectional's regional composition (regionals are
+  // bisected per-half instead of per-whole-sectional), so a toggle flip needs the same
+  // regional/sub-sectional override reset as any other field-changing control — it's
+  // folded into sig rather than handled as a special case.
+  const sig=sp+"|"+kl+"|"+P+"|"+R+"|"+(subEnabled?1:0)+"|"+(hasRating?1:0);
   const fresh = sig!==lastSig;
-  if(fresh){ hostOverrides={Current:{},Proposed:{}}; regHostOverrides={Current:{},Proposed:{}}; lastSig=sig; }
+  if(fresh){
+    hostOverrides={Current:{},Proposed:{}};
+    regHostOverrides={Current:{},Proposed:{}};
+    subHostOverrides={Current:{},Proposed:{}};
+    lastSig=sig;
+  }
 
   const realForField=realGroups(sp,kl);
   const hasReal=!!realForField;
@@ -1108,53 +1544,120 @@ function run(){
   }
   applySectionalOverrides(curGroups,sp,"Current");
   curGroups.forEach((g,i)=>{ if(hostOverrides.Current[i]) g.hostLoc=hostOverrides.Current[i]; });
-  const cur=metricsFor(curGroups,R,(si,ri)=>regHostOverrides.Current[`${si}:${ri}`]);
+  const cur=metricsFor(curGroups,R,(si,ri)=>regHostOverrides.Current[`${si}:${ri}`],0,
+    {enabled:subEnabled,hostLookup:(si,hi)=>subHostOverrides.Current[`${si}:${hi}`]},seedSport);
 
   const pubGroups=simGroups(pub,8-P,"Public path");
-  const prvGroups=priv.length?simGroups(priv,P,"Private path"):[];
+  const prvGroups=priv.length?simGroups(priv,P,sepPathName()):[];
   const propGroups=pubGroups.concat(prvGroups);
   applySectionalOverrides(propGroups,sp,"Proposed");
   const propRows=[];
   propGroups.forEach((g,gi)=>{
     if(hostOverrides.Proposed[gi]) g.hostLoc=hostOverrides.Proposed[gi];
-    metricsFor([g],R,(si,ri)=>regHostOverrides.Proposed[`${si}:${ri}`],gi).forEach(r=>propRows.push(r));
+    metricsFor([g],R,(si,ri)=>regHostOverrides.Proposed[`${si}:${ri}`],gi,
+      {enabled:subEnabled,hostLookup:(si,hi)=>subHostOverrides.Proposed[`${si}:${hi}`]},seedSport).forEach(r=>propRows.push(r));
   });
 
-  const keep = fresh ? {Current:{sec:null,reg:null},Proposed:{sec:null,reg:null}}
-                     : {Current:{sec:mapState.Current.sec,reg:mapState.Current.reg},
-                        Proposed:{sec:mapState.Proposed.sec,reg:mapState.Proposed.reg}};
-  mapState.Current={rows:cur,sec:keep.Current.sec,reg:keep.Current.reg};
-  mapState.Proposed={rows:propRows,sec:keep.Proposed.sec,reg:keep.Proposed.reg};
+  const keep = fresh ? {Current:{sec:null,sub:null,reg:null},Proposed:{sec:null,sub:null,reg:null}}
+                     : {Current:{sec:mapState.Current.sec,sub:mapState.Current.sub,reg:mapState.Current.reg},
+                        Proposed:{sec:mapState.Proposed.sec,sub:mapState.Proposed.sub,reg:mapState.Proposed.reg}};
+  mapState.Current={rows:cur,sec:keep.Current.sec,sub:keep.Current.sub,reg:keep.Current.reg};
+  mapState.Proposed={rows:propRows,sec:keep.Proposed.sec,sub:keep.Proposed.sub,reg:keep.Proposed.reg};
   ["Current","Proposed"].forEach(w=>{fillFilters(w); drawMap(w); renderDetail(w);});
 
-  const curPriv=cur.filter(r=>r.s.p), curPub=cur.filter(r=>!r.s.p);
-  const pubRows=propRows.filter(r=>!r.s.p), prvRows=propRows.filter(r=>r.s.p);
+  const curPriv=cur.filter(r=>isSep(r.s)), curPub=cur.filter(r=>!isSep(r.s));
+  const pubRows=propRows.filter(r=>!isSep(r.s)), prvRows=propRows.filter(r=>isSep(r.s));
   const S={ca:summarize(cur),cp:summarize(curPriv),cu:summarize(curPub),
            pp:summarize(pubRows),pv:summarize(prvRows)};
+  const SEPL=sepLabel();
   const rows=[
-    ["Current — all teams",S.ca],["Current — public",S.cu],["Current — private",S.cp],
-    ["Proposed — public",S.pp],["Proposed — private",S.pv]];
+    ["Current — all teams",S.ca],["Current — public",S.cu],[`Current — ${SEPL}`,S.cp],
+    ["Proposed — public",S.pp],[`Proposed — ${SEPL}`,S.pv]];
+  const noTeamsColspan=subEnabled?9:7;
   let h=`<tr><th>Scenario</th><th>Teams</th><th>Regional avg</th><th>Regional max</th>
+    ${subEnabled?"<th>Sub-sectional avg</th><th>Sub-sectional max</th>":""}
     <th>Sectional avg</th><th>Sectional max</th><th>&gt;75 mi</th><th>&gt;150 mi</th></tr>`;
   rows.forEach(([lab,s])=>{
-    if(!s){h+=`<tr><td>${lab}</td><td colspan="7">no teams</td></tr>`;return;}
-    const hl=lab.includes("Proposed — private")?' class="hl"':"";
+    if(!s){h+=`<tr><td>${lab}</td><td colspan="${noTeamsColspan}">no teams</td></tr>`;return;}
+    const hl=lab===`Proposed — ${SEPL}`?' class="hl"':"";
     h+=`<tr${hl}><td>${lab}</td><td>${s.n}</td><td>${fmt(s.regMean)}</td><td>${fmt(s.regMax)}</td>
+      ${subEnabled?`<td>${s.subMean!=null?fmt(s.subMean):"—"}</td><td>${s.subMax!=null?fmt(s.subMax):"—"}</td>`:""}
       <td>${fmt(s.secMean)}</td><td>${fmt(s.secMax)}</td><td>${s.over75}</td><td>${s.over150}</td></tr>`;
   });
   if(S.cp&&S.pv){
     const dMean=S.pv.secMean-S.cp.secMean, dMax=S.pv.secMax-S.cp.secMax;
-    h+=`<tr><td><strong>Private change (proposed − current)</strong></td><td></td><td></td><td></td>
+    h+=`<tr><td><strong>${SEPL.charAt(0).toUpperCase()+SEPL.slice(1)} change (proposed − current)</strong></td><td></td><td></td><td></td>
+      ${subEnabled?"<td></td><td></td>":""}
       <td class="${dMean>0?"up":"down"}">${dMean>0?"+":""}${dMean.toFixed(1)}</td>
       <td class="${dMax>0?"up":"down"}">${dMax>0?"+":""}${dMax.toFixed(1)}</td><td></td><td></td></tr>`;
   }
+
+  // Bracket fairness: rating-seeding is the only seeding method now (the pure-
+  // geographic option is gone), so the only real lever left to compare is the
+  // Sub-sectionals toggle — computed BOTH ways regardless of which is currently
+  // active (reusing cur/propRows for whichever state is already live, only
+  // recomputing the other), so these rows always show a real before/after without
+  // the user flipping anything. Two distinct questions, since one can look fine
+  // while the other doesn't: do the top-rated teams land in separate REGIONALS
+  // (topTeamSeparation), and — a sub-sectional-specific risk — do they at least
+  // land in separate HALVES, or can a geography-first split still stack most of
+  // them into one half regardless of regional separation (subBalance)? Paired with
+  // the extra travel sub-sectionals cost, split out without/with rather than shown
+  // as a single before/after, since once avg AND max are both shown an arrow-style
+  // single row gets cluttered.
+  const fairColspan=noTeamsColspan;
+  let bal=null, balProp=null;
+  if(hasRating){
+    const subOffRows=subEnabled?computeRows(curGroups,propGroups,R,false,seedSport):{cur,prop:propRows};
+    const subOnRows=subEnabled?{cur,prop:propRows}:computeRows(curGroups,propGroups,R,true,seedSport);
+    const pct=v=>v!=null?v.toFixed(0)+"%":"—";
+    const sepLine=`${pct(topTeamSeparation(subOffRows.cur,sp))} &rarr; ${pct(topTeamSeparation(subOnRows.cur,sp))} (Current)`
+      +` &middot; ${pct(topTeamSeparation(subOffRows.prop,sp))} &rarr; ${pct(topTeamSeparation(subOnRows.prop,sp))} (Proposed)`;
+    bal=subBalance(subOnRows.cur,sp); balProp=subBalance(subOnRows.prop,sp);
+    const worstBtn=(d,val,which)=>d&&d.worstDetail
+      ? `<button class="worstSecBtn" data-which="${which}">${pct(val)}</button>` : pct(val);
+    const balLine=`avg ${pct(bal&&bal.avg)}, worst sectional ${worstBtn(bal,bal&&bal.worst,"Current")} (Current)`
+      +` &middot; avg ${pct(balProp&&balProp.avg)}, worst sectional ${worstBtn(balProp,balProp&&balProp.worst,"Proposed")} (Proposed)`;
+
+    // "With" = regional + sub-sectional avg/max miles combined (a second real trip
+    // that doesn't exist when off); "without" = regional miles alone. Max combines
+    // each leg's own worst case, not necessarily the same school's trip both times —
+    // read it as an upper bound on the two-leg journey, not one team's literal total.
+    const mi=v=>v!=null?v.toFixed(1)+" mi":"—";
+    const preMean=s=>s?s.regMean+(s.subMean||0):null;
+    const preMax=s=>s?s.regMax+(s.subMax||0):null;
+    const subOffCurS=summarize(subOffRows.cur), subOnCurS=summarize(subOnRows.cur);
+    const subOffPropS=summarize(subOffRows.prop), subOnPropS=summarize(subOnRows.prop);
+    const offLine=`avg ${mi(preMean(subOffCurS))}, max ${mi(preMax(subOffCurS))} (Current)`
+      +` &middot; avg ${mi(preMean(subOffPropS))}, max ${mi(preMax(subOffPropS))} (Proposed)`;
+    const onLine=`avg ${mi(preMean(subOnCurS))}, max ${mi(preMax(subOnCurS))} (Current)`
+      +` &middot; avg ${mi(preMean(subOnPropS))}, max ${mi(preMax(subOnPropS))} (Proposed)`;
+
+    h+=`<tr><td colspan="${noTeamsColspan+1}" style="padding-top:14px;"><strong>Bracket fairness</strong>
+        <span style="color:var(--muted); font-size:12px; font-weight:400;">— rating-based seeding is the only method now, so these compare outcomes without vs. with sub-sectionals (the geographic split applied before seeding)</span></td></tr>
+      <tr><td>Top teams kept in separate regionals
+          <div style="font-weight:400; color:var(--muted); font-size:11.5px;">% of a sectional's top-rated teams (one per regional) that land in different regionals — higher means it's harder for two strong teams to meet before the sectional final</div>
+        </td><td colspan="${fairColspan}">${sepLine}</td></tr>
+      <tr><td>Sub-sectional balance
+          <div style="font-weight:400; color:var(--muted); font-size:11.5px;">of those same top-rated teams, the largest share that land in ONE sub-sectional half — 50% is an even split, 100% means every one of them landed in the same half (e.g. a half with the top 3 rated teams vs. a half whose best is only 4th-best)</div>
+        </td><td colspan="${fairColspan}">${balLine}</td></tr>
+      <tr><td>Travel before the sectional final — without sub-sections</td><td colspan="${fairColspan}">${offLine}</td></tr>
+      <tr><td>Travel before the sectional final — with sub-sections</td><td colspan="${fairColspan}">${onLine}</td></tr>`;
+  }else{
+    h+=`<tr><td colspan="${noTeamsColspan+1}" style="padding-top:14px;"><strong>Bracket fairness</strong>
+      <span style="color:var(--muted); font-size:12px; font-weight:400;">— no MaxPreps rating data for this sport, comparison unavailable</span></td></tr>`;
+  }
   $("statTable").innerHTML=h;
+  $("statTable").querySelectorAll(".worstSecBtn").forEach(btn=>{
+    const detail=(btn.dataset.which==="Current"?bal:balProp).worstDetail;
+    btn.onclick=()=>openBalanceDetail(detail, btn.dataset.which);
+  });
 
   const curBy={}; cur.forEach(r=>curBy[r.s.n]=r);
   const detail=[];
   propRows.forEach(r=>{
     const c=curBy[r.s.n]; if(!c) return;
-    detail.push({school:r.s.n, priv:r.s.p,
+    detail.push({school:r.s.n, priv:r.s.p, nb:isNB(r.s)?1:0, tag:sepTag(r.s),
                  curSecName:c.secName, curRegNum:c.reg+1, curRegHost:c.regHost, curSecHost:c.secHost,
                  propSecName:r.secName, propRegNum:r.reg+1, propRegHost:r.regHost, propSecHost:r.secHost,
                  curReg:c.regMi, curSec:c.secMi,
@@ -1163,6 +1666,7 @@ function run(){
   });
   lastDetail=detail;
   renderDataTable();
+  renderBracketTab();
   renderCutoffEditor();
   renderMultiplierEditor();
   renderClassSummary();
@@ -1171,7 +1675,7 @@ function run(){
   let w=`<tr><th>School</th><th>Regional (now)</th><th>Sectional (now)</th>
     <th>Regional (proposed)</th><th>Sectional (proposed)</th><th>Change (regional)</th><th>Change (sectional)</th></tr>`;
   worst.forEach(d=>{
-    w+=`<tr><td>${d.school}${d.priv?'<span class="privtag">PRIVATE</span>':""}</td>
+    w+=`<tr><td>${d.school}${d.tag||""}</td>
       <td>${d.curReg.toFixed(0)}</td><td>${d.curSec.toFixed(0)}</td>
       <td>${d.propReg.toFixed(0)}</td><td>${d.propSec.toFixed(0)}</td>
       <td class="${d.dReg>0?"up":"down"}">${d.dReg>0?"+":""}${d.dReg.toFixed(0)} mi</td>
@@ -1183,7 +1687,7 @@ function run(){
 function applyRecommendation(){
   const sp=$("sport").value, kl=$("klass").value;
   const field=DATA.filter(d=>effectiveClass(d,sp)===kl);
-  const rec=recommendPaths(field,field.filter(d=>d.p));
+  const rec=sepMode()==="committee"?2:recommendPaths(field,field.filter(isSep));
   $("privpaths").value=rec;
   $("privpathsval").textContent=rec;
 }
@@ -1196,12 +1700,25 @@ function fillClasses(){
 
 ["Current","Proposed"].forEach(w=>{
   document.getElementById("secSel"+w).onchange=e=>{
-    setSel(w, e.target.value===""?null:+e.target.value, null);
+    setSel(w, e.target.value===""?null:+e.target.value, null, null);
+  };
+  document.getElementById("subSel"+w).onchange=e=>{
+    setSel(w, mapState[w].sec, e.target.value===""?null:+e.target.value, null);
   };
   document.getElementById("regSel"+w).onchange=e=>{
-    setSel(w, mapState[w].sec, e.target.value===""?null:+e.target.value);
+    setSel(w, mapState[w].sec, mapState[w].sub, e.target.value===""?null:+e.target.value);
   };
 });
+
+$("bracketSystem").onchange=e=>{
+  bracketWhich=e.target.value;
+  fillBracketFilters();
+  renderBracketPanel();
+};
+$("bracketSelSingle").onchange=e=>{
+  bracketSel[bracketWhich]=e.target.value===""?null:+e.target.value;
+  renderBracketPanel();
+};
 
 // ---- cutoff editor + multiplier lever (Schools tab, both follow the main sport picker
 // for the cutoff editor; multiplier is tool-wide, not sport-specific)
@@ -1298,14 +1815,14 @@ function renderClassSummary(){
   DATA.filter(d=>d.c[sp]).forEach(d=>{
     const cls=effectiveClass(d,sp);
     const g=groups[cls]||(groups[cls]={total:0,pub:0,priv:0});
-    g.total++; if(d.p) g.priv++; else g.pub++;
+    g.total++; if(isNB(d)) g.priv++; else g.pub++;
   });
   const order=Object.keys(groups).sort((a,b)=>{
     const ai=CLASS_CUTOFFS[sp]?CLASS_CUTOFFS[sp].findIndex(([k])=>k===a):-1;
     const bi=CLASS_CUTOFFS[sp]?CLASS_CUTOFFS[sp].findIndex(([k])=>k===b):-1;
     return ai!==-1&&bi!==-1?ai-bi:String(a).localeCompare(String(b));
   });
-  let h=`<tr><th>Class</th><th>Schools</th><th>Public</th><th>Private</th></tr>`;
+  let h=`<tr><th>Class</th><th>Schools</th><th>Boundaried</th><th>Non-boundaried</th></tr>`;
   order.forEach(cls=>{
     const g=groups[cls];
     h+=`<tr><td style="text-align:left">${cls==="S"?"Single class":cls}</td><td>${g.total}</td><td>${g.pub}</td><td>${g.priv}</td></tr>`;
@@ -1436,7 +1953,7 @@ function renderOvrDetail(name){
   const o=overrides[name]||{};
   const enBase=school.en;
   const curEnVal=o.en!=null?o.en:(enBase!=null?enBase:"");
-  let h=`<h4>${school.n}${school.p?'<span class="privtag">PRIVATE</span>':""}</h4>`;
+  let h=`<h4>${school.n}${sepTag(school)}</h4>`;
   if(enBase==null){
     h+=`<div class="dmeta">No enrollment figure on file for this school — classification override unavailable.</div>`;
   }else{
@@ -1448,8 +1965,8 @@ function renderOvrDetail(name){
     </div>`;
     const sports=Object.keys(school.c).filter(sp=>school.c[sp]!=="S");
     if(sports.length){
-      h+=`<table><tr><th>Sport</th><th>Current class</th><th>IHSA flag</th><th>1.65&times; multiplier${school.p?"":" (private only)"}</th>
-        <th>Success factor${school.p?"":" (private only)"}</th><th>Effective class</th><th>Expected next year</th></tr>`;
+      h+=`<table><tr><th>Sport</th><th>Current class</th><th>IHSA flag</th><th>1.65&times; multiplier${isNB(school)?"":" (non-boundaried only)"}</th>
+        <th>Success factor${isNB(school)?"":" (non-boundaried only)"}</th><th>Effective class</th><th>Expected next year</th></tr>`;
       sports.forEach(sp=>{
         const cur=school.c[sp];
         if(!CLASS_CUTOFFS[sp]){
@@ -1459,7 +1976,7 @@ function renderOvrDetail(name){
         const flag=(school.flg&&school.flg[sp])||null;
         const multExplicit=o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp);
         const official=officialMultState(school,sp);
-        const multOn=multExplicit?o.mult[sp]:(official!=null?official:school.p);
+        const multOn=multExplicit?o.mult[sp]:(official!=null?official:isNB(school));
         const successExplicit=o.success&&Object.prototype.hasOwnProperty.call(o.success,sp);
         const autoSuccess=autoSuccessFactor(school,sp);
         const successOn=successExplicit?o.success[sp]:autoSuccess;
@@ -1467,8 +1984,8 @@ function renderOvrDetail(name){
         const nextCls=nextYearClass(school,sp);
         h+=`<tr${changed?' class="hl"':""}><td>${SPORTS[sp]||sp}</td><td>${cur}</td>
           <td>${flag?FLAG_LABELS[flag]:"—"}</td>
-          <td>${school.p?`<input type="checkbox" class="ovrMultSport" data-sport="${sp}"${multOn?" checked":""}>`:"—"}</td>
-          <td>${school.p?`<input type="checkbox" class="ovrSuccessSport" data-sport="${sp}"${successOn?" checked":""}>${autoSuccess?' <span class="fieldnote">(auto)</span>':""}`:"—"}</td>
+          <td>${isNB(school)?`<input type="checkbox" class="ovrMultSport" data-sport="${sp}"${multOn?" checked":""}>`:"—"}</td>
+          <td>${isNB(school)?`<input type="checkbox" class="ovrSuccessSport" data-sport="${sp}"${successOn?" checked":""}>${autoSuccess?' <span class="fieldnote">(auto)</span>':""}`:"—"}</td>
           <td>${eff}${changed?" <strong>(changed)</strong>":""}</td>
           <td>${nextCls}${nextCls!==cur?' <span class="fieldnote">(changes)</span>':""}</td></tr>`;
       });
@@ -1487,7 +2004,7 @@ function renderOvrDetail(name){
   if(inField){
     const fieldNow=DATA.filter(d=>effectiveClass(d,curSp)===curKl);
     const curP=+$("privpaths").value;
-    const hasPriv=fieldNow.some(d=>d.p);
+    const hasPriv=fieldNow.some(isSep);
     const realForCur=realGroups(curSp,curKl);
     if(realForCur){
       curNames=realForCur.map(g=>g.name);
@@ -1500,7 +2017,7 @@ function renderOvrDetail(name){
       curNatural=nat?nat.name:null;
     }
     for(let i=1;i<=Math.max(0,8-curP);i++) propNames.push(`Public path ${i}`);
-    if(hasPriv) for(let i=1;i<=curP;i++) propNames.push(`Private path ${i}`);
+    if(hasPriv) for(let i=1;i<=curP;i++) propNames.push(`${sepPathName()} ${i}`);
   }
   if(inField){
     const overrideCur=o.sectional&&o.sectional[curSp]&&o.sectional[curSp].Current;
@@ -1550,7 +2067,7 @@ function renderOvrDetail(name){
       // officialMultState), else the blanket "every private program is multiplied"
       // assumption — checked matching that default means nothing to store.
       const officialSp=officialMultState(school,sp);
-      const defaultOn=officialSp!=null?officialSp:school.p;
+      const defaultOn=officialSp!=null?officialSp:isNB(school);
       if(cb.checked===defaultOn) delete ov.mult[sp]; else ov.mult[sp]=cb.checked;
       pruneOvr(name); saveOverrides(); run(); renderOvrDetail(name); renderOvrList();
     };
@@ -1622,7 +2139,7 @@ function renderDataTable(){
     return `<th class="sortable" data-key="${key}">${lab}<span class="arr">${arr}</span></th>`;
   }).join("")+"</tr>";
   rows.forEach(d=>{
-    h+=`<tr><td style="text-align:left">${d.school}${d.priv?'<span class="privtag">PRIVATE</span>':""}</td>
+    h+=`<tr><td style="text-align:left">${d.school}${d.tag||""}</td>
       <td style="text-align:left">${d.curSecName}</td><td>${d.curRegNum}</td>
       <td>${d.curSec.toFixed(0)}</td>
       <td style="text-align:left">${d.propSecName}</td><td>${d.propRegNum}</td>
@@ -1638,6 +2155,126 @@ function renderDataTable(){
       renderDataTable();
     };
   });
+}
+
+// ---- Bracket tab — a single bracket-tree view (rounds as side-by-side columns,
+// the same layout ihsa.org's own bracket pages use) for one system at a time,
+// picked via the System dropdown. Reuses whichever sectional/regional ROWS run()
+// already computed (mapState[which].rows) rather than rebuilding groups —
+// sectional/path membership is identical to the Scenario Explorer's, only the
+// bracket presentation differs.
+let bracketWhich="Current";
+let bracketSel={Current:null, Proposed:null};
+
+function fillBracketFilters(){
+  const which=bracketWhich, st=mapState[which];
+  const secs=[...new Set(st.rows.map(r=>r.sec))].sort((a,b)=>a-b);
+  if(bracketSel[which]==null||!secs.includes(bracketSel[which])) bracketSel[which]=secs.length?secs[0]:null;
+  $("bracketSelSingle").innerHTML=secs.map(si=>
+    `<option value="${si}"${si===bracketSel[which]?" selected":""}>${secName(which,si)}</option>`).join("");
+}
+
+// Renders a bracket as rounds-as-columns (left = earliest round), each column a
+// vertically-stacked list of matchup cards — matches ihsa.org's own bracket-page
+// layout rather than this tool's earlier one-round-per-line report style.
+// `matchHtml` renders a single round's matchup into a card (real vs. modeled
+// brackets carry different shapes, see below).
+function renderBracketColumns(rounds, matchHtml){
+  return `<div class="bracketCols">`+rounds.map(rnd=>
+    `<div class="bracketCol"><div class="bracketColName">${rnd.name}</div>`
+    +rnd.matchups.map(matchHtml).join("")+`</div>`
+  ).join("")+`</div>`;
+}
+
+// A real historical matchup (see pull_brackets.py/RAW.brk): teamA/teamB are plain
+// printed names (not school objects — no travel/host modeling, since this game
+// already happened), winner is "A"/"B"/null. Scores aren't shown — this is a
+// bracket view, not a results report.
+function realMatchHtml(m){
+  const aWin=m.winner==="A", bWin=m.winner==="B";
+  return `<div class="bracketMatch">
+    <div class="bracketTeam${aWin?" winner":""}"><span class="seedTag">${m.seedA}</span> ${m.teamA}</div>
+    <div class="bracketTeam${bWin?" winner":""}"><span class="seedTag">${m.seedB}</span> ${m.teamB}</div>
+  </div>`;
+}
+
+// A modeled (synthetic) matchup — see buildBracket()/buildSectionalBracket(). Only
+// round 1 (or a sub-sectional's own round 1) has real teams/travel; later rounds
+// are structure-only since there's no results engine to know who advances.
+function synthMatchHtml(m){
+  if(m.seedA==null){
+    return `<div class="bracketMatch tbd">
+      <div class="bracketTeam">Winner of Sub-sectional 1</div>
+      <div class="bracketTeam">Winner of Sub-sectional 2</div>
+      ${m.host?`<div class="bracketHost">hosted at ${m.host}</div>`:""}
+    </div>`;
+  }
+  if(m.teamA&&m.teamB){
+    return `<div class="bracketMatch">
+      <div class="bracketTeam"><span class="seedTag">${m.seedA}</span> ${m.teamA.n}${sepTag(m.teamA)}</div>
+      <div class="bracketTeam"><span class="seedTag">${m.seedB}</span> ${m.teamB.n}${sepTag(m.teamB)}</div>
+      <div class="bracketHost">${m.host}, ${m.miA.toFixed(0)}/${m.miB.toFixed(0)} mi</div>
+    </div>`;
+  }
+  if(m.bye){
+    return `<div class="bracketMatch bye">
+      <div class="bracketTeam"><span class="seedTag">${m.seedA}</span> ${m.teamA.n}${sepTag(m.teamA)}</div>
+      <div class="hostnote">(bye)</div>
+    </div>`;
+  }
+  return `<div class="bracketMatch tbd">
+    <div class="bracketTeam">Seed ${m.seedA}</div>
+    <div class="bracketTeam">Seed ${m.seedB}</div>
+  </div>`;
+}
+
+function renderBracketPanel(){
+  const which=bracketWhich;
+  const st=mapState[which], el=$("bracketSingle");
+  const si=bracketSel[which];
+  if(si==null){ el.innerHTML='<span class="hint">No sectional data.</span>'; return; }
+  const rows=st.rows.filter(r=>r.sec===si);
+  if(!rows.length){ el.innerHTML='<span class="hint">No schools in this group.</span>'; return; }
+  const sp=$("sport").value, kl=$("klass").value, secN=secName(which,si);
+
+  // Current: prefer the real, already-happened 2025-26 bracket (real seeds/
+  // rounds — see pull_brackets.py) over our own synthetic reseed. The Current
+  // system isn't hypothetical; it already ran. Falls back to the synthetic
+  // model below only when this sport/class/sectional has no real data on file
+  // (e.g. a name/year mismatch, like water polo's season-old sectional
+  // assignments) — never used for Proposed, which stays synthetic by design
+  // since it's modeling a system that hasn't happened.
+  const real = which==="Current" && RAW.brk && RAW.brk[sp] && RAW.brk[sp][kl] && RAW.brk[sp][kl][secN];
+  if(real){
+    let h=`<h4>${secN}</h4><div class="dmeta">${rows.length} schools &middot; actual 2025-26 IHSA bracket</div>`;
+    h+=renderBracketColumns(real.rounds, realMatchHtml);
+    el.innerHTML=h;
+    return;
+  }
+
+  if(!rows.some(r=>r.s.rtg&&r.s.rtg[sp]!=null)){
+    el.innerHTML=`<h4>${secN}</h4><div class="dmeta">No MaxPreps rating data for this sport — bracket unavailable`
+      +(which==="Current"?" (and no real 2025-26 bracket data on file for this sectional)":"")+`.</div>`;
+    return;
+  }
+  const members=rows.map(r=>r.s);
+  const subOn=$("subsecToggle").checked;
+  const secHostName=hostCoordsFor(which,si).n;
+  const b=buildSectionalBracket(members,sp,subOn,secHostName);
+  let h=`<h4>${secN}</h4><div class="dmeta">${members.length} schools &middot; modeled bracket (synthetic seeding)</div>`;
+  if(b.subBrackets){
+    h+=`<div class="bracketHalf"><h5>Sub-sectional 1</h5>`+renderBracketColumns(b.subBrackets[0].rounds, synthMatchHtml)+`</div>`;
+    h+=`<div class="bracketHalf"><h5>Sub-sectional 2</h5>`+renderBracketColumns(b.subBrackets[1].rounds, synthMatchHtml)+`</div>`;
+    h+=renderBracketColumns([b.finalRound], synthMatchHtml);
+  }else{
+    h+=renderBracketColumns(b.rounds, synthMatchHtml);
+  }
+  el.innerHTML=h;
+}
+
+function renderBracketTab(){
+  fillBracketFilters();
+  renderBracketPanel();
 }
 
 // ---- schools directory tab — every school with a class in the sport picked up top,
@@ -1659,13 +2296,15 @@ function schoolsRows(){
     const autoSuccess=autoSuccessFactor(d,sp);
     const official=officialMultState(d,sp);
     return {
-      school:d.n, priv:d.p, type:d.p?"Private":"Public", en:d.en,
+      school:d.n, priv:d.p, nb:isNB(d)?1:0, tag:sepTag(d),
+      kind:d.p?"private":(isNB(d)?"nbpub":"public"),
+      type:d.p?"Private":(isNB(d)?"Public (NB)":"Public"), en:d.en,
       adjEn:effectiveEnrollment(d,sp),
       cls:effectiveClass(d,sp), baseCls:d.c[sp], nextCls:nextYearClass(d,sp),
       flag:(d.flg&&d.flg[sp])||null,
-      multEligible:d.p&&!!CLASS_CUTOFFS[sp],
-      multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:(official!=null?official:d.p),
-      successEligible:d.p&&!!CLASS_CUTOFFS[sp],
+      multEligible:isNB(d)&&!!CLASS_CUTOFFS[sp],
+      multOn:(o&&o.mult&&Object.prototype.hasOwnProperty.call(o.mult,sp))?o.mult[sp]:(official!=null?official:isNB(d)),
+      successEligible:isNB(d)&&!!CLASS_CUTOFFS[sp],
       successOn:successExplicit?o.success[sp]:autoSuccess, successAuto:autoSuccess,
     };
   });
@@ -1688,7 +2327,7 @@ function renderSchoolsTable(){
   const q=($("schoolsSearch").value||"").toLowerCase();
   const typeF=$("schoolsTypeFilter").value, clsF=$("schoolsClassFilter").value;
   let rows=all.filter(r=>(!q||r.school.toLowerCase().includes(q))
-    &&(!typeF||(typeF==="1"?r.priv:!r.priv))
+    &&(!typeF||r.kind===typeF)
     &&(!clsF||r.cls===clsF));
   const k=schoolsSort.key, dir=schoolsSort.dir;
   rows=[...rows].sort((a,b)=>{
@@ -1707,7 +2346,7 @@ function renderSchoolsTable(){
     const changed=r.cls!==r.baseCls;
     const enChanged=r.adjEn!=null&&r.en!=null&&r.adjEn!==r.en;
     const esc=r.school.replace(/"/g,"&quot;");
-    h+=`<tr><td style="text-align:left">${r.school}${r.priv?'<span class="privtag">PRIVATE</span>':""}</td>
+    h+=`<tr><td style="text-align:left">${r.school}${r.tag||""}</td>
       <td style="text-align:left">${r.type}</td>
       <td>${r.en!=null?r.en:"—"}</td>
       <td>${r.adjEn!=null?r.adjEn.toFixed(1):"—"}${enChanged?' <span class="fieldnote">(×1.65)</span>':""}</td>
@@ -1732,7 +2371,7 @@ function renderSchoolsTable(){
       const ov=overrides[nm]||(overrides[nm]={});
       ov.mult=ov.mult||{};
       const officialSp=officialMultState(sch,sp2);
-      const defaultOn=officialSp!=null?officialSp:sch.p;
+      const defaultOn=officialSp!=null?officialSp:isNB(sch);
       if(cb.checked===defaultOn) delete ov.mult[sp2]; else ov.mult[sp2]=cb.checked;
       pruneOvr(nm); saveOverrides(); run();
       if($("ovrPick").value===nm) renderOvrDetail(nm);
@@ -1763,8 +2402,8 @@ function downloadSchoolsCSV(){
 }
 
 function downloadCSV(){
-  const head="school,is_private,current_sectional,current_regional,current_regional_host,current_sectional_host,proposed_path,proposed_regional,proposed_regional_host,proposed_sectional_host,current_regional_mi,current_sectional_mi,proposed_regional_mi,proposed_sectional_mi,change_regional_mi,change_sectional_mi\n";
-  const body=lastDetail.map(d=>[JSON.stringify(d.school),d.priv,JSON.stringify(d.curSecName),d.curRegNum,
+  const head="school,is_private,is_nonboundaried,current_sectional,current_regional,current_regional_host,current_sectional_host,proposed_path,proposed_regional,proposed_regional_host,proposed_sectional_host,current_regional_mi,current_sectional_mi,proposed_regional_mi,proposed_sectional_mi,change_regional_mi,change_sectional_mi\n";
+  const body=lastDetail.map(d=>[JSON.stringify(d.school),d.priv,d.nb,JSON.stringify(d.curSecName),d.curRegNum,
     JSON.stringify(d.curRegHost),JSON.stringify(d.curSecHost),JSON.stringify(d.propSecName),d.propRegNum,
     JSON.stringify(d.propRegHost),JSON.stringify(d.propSecHost),
     d.curReg.toFixed(1),d.curSec.toFixed(1),d.propReg.toFixed(1),d.propSec.toFixed(1),
@@ -1781,6 +2420,7 @@ $("schoolsTypeFilter").onchange=renderSchoolsTable;
 $("schoolsClassFilter").onchange=renderSchoolsTable;
 $("schoolsDl").onclick=downloadSchoolsCSV;
 const TABS={Scenario:["tabScenario","viewScenario"],Data:["tabData","viewData"],
+  Bracket:["tabBracket","viewBracket"],
   Overrides:["tabOverrides","viewOverrides"],Schools:["tabSchools","viewSchools"]};
 function showTab(which){
   Object.entries(TABS).forEach(([k,[tabId,viewId]])=>{
@@ -1790,17 +2430,25 @@ function showTab(which){
 }
 $("tabScenario").onclick=()=>showTab("Scenario");
 $("tabData").onclick=()=>showTab("Data");
+$("tabBracket").onclick=()=>showTab("Bracket");
 $("tabOverrides").onclick=()=>showTab("Overrides");
 $("tabSchools").onclick=()=>showTab("Schools");
 
 $("sport").innerHTML=Object.entries(SPORTS).map(([k,v])=>`<option value="${k}"${k==="SOB"?" selected":""}>${v}</option>`).join("");
 $("sport").onchange=()=>{fillClasses();applyRecommendation();run();};
 $("klass").onchange=()=>{applyRecommendation();run();};
+function syncSepUI(){
+  const committee=sepMode()==="committee";
+  $("privpaths").disabled=committee;
+  if(committee){$("privpaths").value=2;$("privpathsval").textContent="2";}
+}
+$("sepmode").onchange=()=>{syncSepUI();applyRecommendation();run();};
 $("privpaths").oninput=e=>{$("privpathsval").textContent=e.target.value;run();};
 $("regsize").oninput=e=>{$("regsizeval").textContent=e.target.value;run();};
+$("subsecToggle").onchange=run;
 $("allschoolsOvr").innerHTML=DATA.map(d=>`<option value="${d.n.replace(/"/g,"&quot;")}">`).join("");
 renderOvrList();
-fillClasses(); applyRecommendation(); run();
+fillClasses(); syncSepUI(); applyRecommendation(); run();
 </script>
 </body>
 </html>

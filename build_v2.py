@@ -178,6 +178,74 @@ for printed, sports in class_flags.items():
             recs[canon].setdefault("flg", {})[sport] = d["flag"]
 print(f"classification corrections applied (schools_master.csv value -> official): {flag_corrections}")
 
+# MaxPreps team-strength ratings (see pull_maxpreps_rankings.py) — embedded per school
+# as {sport: rating}, flattened from the richer per-class rank/record/rating/strength
+# in maxpreps_ratings.json since a school's class is already known via its own "c"
+# entry. Names in that file are already canonicalized against schools_data.json by
+# the pull script itself, so no norm/match step is needed here (unlike
+# classifications_flags.json above, which is keyed by IHSA-printed names). Water polo
+# and girls flag football aren't covered — no usable MaxPreps rankings found for
+# either (see pull_maxpreps_rankings.py's docstring).
+try:
+    with open("maxpreps_ratings.json", encoding="utf-8") as f:
+        maxpreps_ratings = json.load(f)
+except FileNotFoundError:
+    maxpreps_ratings = {}
+for sport, classes in maxpreps_ratings.items():
+    for class_label, schools in classes.items():
+        for school, d in schools.items():
+            if school in recs:
+                recs[school].setdefault("rtg", {})[sport] = d["rating"]
+
+# Real 2025-26 season brackets (see pull_brackets.py) — actual seeds/scores/rounds
+# per sectional, sourced straight from ihsa.org's own bracket pages rather than our
+# synthetic MaxPreps reseed. Embedded as its own top-level key (like "assign") so
+# template.html can render the Current side of the Bracket tab from real history;
+# the Proposed side stays synthetic by design (it's inherently hypothetical).
+try:
+    with open("real_brackets.json", encoding="utf-8") as f:
+        real_brackets = json.load(f)
+except FileNotFoundError:
+    real_brackets = {}
+
+# Official IHSA non-boundaried schools list (source_data/Non-Boundaried_Schools.xlsx,
+# sheets "Full Members" + "Approved Schools" — the list behind the Competitive Balance
+# Committee's plan to give non-boundaried schools their own bracket quadrant). Embedded
+# per school as nb:1; this is the separation basis for the committee plan in the UI.
+# A private school missing from the list keeps nb:1 anyway (every IHSA private school
+# is by definition non-boundaried; absence usually means a membership lapse — reported
+# below rather than silently dropped). A school on the list that we had recorded as
+# boundaried public gets its status corrected to public_nonboundaried (the official
+# list wins over our earlier research).
+nb_src = "source_data/Non-Boundaried_Schools.xlsx"
+nb_names = []
+for sheet in ("Full Members", "Approved Schools"):
+    nb_df = pd.read_excel(nb_src, sheet_name=sheet)
+    nb_names += [str(x).strip() for x in nb_df["NameIHSA"].dropna()]
+recs_by_norm = {norm(k): k for k in recs}
+nb_matched, nb_unmatched = set(), []
+for printed in nb_names:
+    k = norm(printed)
+    if k in recs_by_norm:
+        nb_matched.add(recs_by_norm[k])
+    else:
+        nb_unmatched.append(printed)
+status_fixed = 0
+for name, rec in recs.items():
+    on_list = name in nb_matched
+    rec["nb"] = 1 if (on_list or rec["p"] == 1) else 0
+    if on_list and rec["st"] == "public":
+        rec["st"] = "public_nonboundaried"
+        status_fixed += 1
+        report.append(f"NBFIX  {name}: status public -> public_nonboundaried (official NB list)")
+    if rec["p"] == 1 and not on_list:
+        report.append(f"NBGAP  {name}: private but not on official NB list (membership lapse?)")
+for printed in nb_unmatched:
+    report.append(f"NBMISS {printed}: on official NB list, fields no tracked sport (no record)")
+print(f"non-boundaried: {len(nb_names)} official names, {len(nb_matched)} matched, "
+      f"{len(nb_unmatched)} field no tracked sport | status fixes: {status_fixed} | "
+      f"nb-flagged records: {sum(1 for r in recs.values() if r['nb'])}")
+
 schools_out = list(recs.values())
 with open("schools_data.json","w",encoding="utf-8",newline="\n") as f:
     f.write('{\n"schools": [\n')
@@ -186,6 +254,8 @@ with open("schools_data.json","w",encoding="utf-8",newline="\n") as f:
         f.write(line + (",\n" if i < len(schools_out)-1 else "\n"))
     f.write('],\n"assign": ')
     f.write(json.dumps(assign_out, indent=1, ensure_ascii=False))
+    f.write(',\n"brk": ')
+    f.write(json.dumps(real_brackets, indent=1, ensure_ascii=False))
     f.write("\n}\n")
 
 with open("match_report.txt","w",encoding="utf-8") as f:

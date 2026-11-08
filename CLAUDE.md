@@ -1,8 +1,15 @@
 # IHSA Postseason Scenario Explorer
 
-Analysis tool supporting a proposal to the IHSA: separate public and private schools
-in postseason brackets until the final 8, with travel-distance comparisons vs. the
-current system.
+Analysis tool for IHSA postseason separation proposals, now modeled on the IHSA
+Competitive Balance Committee plan (Oct 2026): all non-boundaried schools in each
+class are placed in their own QUADRANT of the state-series bracket — 2 of the 8
+sectionals, whose winners meet in the NB super-sectional — so public and
+non-boundaried schools can't meet before the state semifinals and exactly one NB
+school reaches each class's final four. Board policy (no member vote needed),
+earliest effect 2027-28; no multiplier/success-formula changes are part of the plan.
+The tool compares travel and bracket structure vs. the current system, with two
+selectable variants: same NB population with a custom path count, and the original
+private-only proposal (merge at the Elite 8), kept for comparison.
 
 ## Files
 - `index.html` — the built, self-contained explorer (deployed via Vercel from the
@@ -10,9 +17,10 @@ current system.
   build pipeline below.
 - `template.html` — the actual page source (markup, CSS, grouping/travel JS), with
   a placeholder in place of the embedded data: `const RAW = __RAW_DATA_JSON__;`.
-- `schools_data.json` — the data that gets embedded: `{"schools": [...], "assign": {...}}`,
-  one school per line for readable diffs. Each school carries `en` (base ISBE enrollment,
-  pre-multiplier; `null` for the handful of schools added only via sport-roster matching —
+- `schools_data.json` — the data that gets embedded: `{"schools": [...], "assign": {...},
+  "brk": {...}}`, one school per line for readable diffs. Each school carries `en` (base
+  ISBE enrollment, pre-multiplier; `null` for the handful of schools added only via
+  sport-roster matching —
   see `build_v2.py`'s `extra_rows`). Output of `build_v2.py`; hand-edits (e.g.
   resolving a review-list school's status) are also fine, then rerun `build_site.py`.
 - `build_site.py` — substitutes `schools_data.json` into `template.html`'s placeholder,
@@ -20,6 +28,14 @@ current system.
 - `prepare_data.py` — reads `source_data/IHSA_private_schools.xlsx`, normalizes
   public/private status, geocodes schools by city (offline `zipcodes` package),
   writes `schools_master.csv`.
+- `source_data/Non-Boundaried_Schools.xlsx` — the OFFICIAL IHSA non-boundaried
+  schools list ("Full Members" + "Approved Schools" sheets, 225 names). `build_v2.py`
+  norm-matches it against the final record set and embeds `nb:1` per school (a
+  private school missing from the list keeps nb:1 — see the NBGAP note on Evanston
+  (Roycemore), likely a membership lapse; 22 listed schools field no tracked sport
+  and get no record — NBMISS lines in `match_report.txt`). Also corrected Chicago
+  (Alcott) from boundaried public to public_nonboundaried (NBFIX). This list is the
+  separation basis for the committee plan.
 - `new_sports.py` — actual IHSA sectional assignments transcribed from ihsa.org for every
   sport the tool tracks: FLGG, LAXB, LAXG, VBB, WPB, WPG (single flat sectional list each —
   these are single-class sports) and SOB/SOG/VBG/BKB/BKG/BA/SBG (a class→sectional-list dict
@@ -67,6 +83,73 @@ current system.
   against the class values already in `schools_master.csv` (97.9% agreement; the 42
   disagreements are mostly co-op, the rest are real errors in the older data, now
   corrected by this source taking precedence).
+- `maxpreps_ratings.json` — `{sport: {class: {school: {"rank":, "record":, "rating":,
+  "str":}}}}` from MaxPreps' team-strength rankings, for the 7 enrollment-classed
+  sports (BA/BKB/BKG/SBG/VBG/SOB/SOG) plus the 3 single-class sports VBB/LAXB/LAXG
+  (class key `"S"`, matching how `school.c[sport]` already uses `"S"`). Water polo
+  (WPB/WPG) and girls flag football (FLGG) are excluded — no usable MaxPreps rankings
+  found for either (water polo's page has no inline rankings table; flag football's
+  URL slug couldn't be found). Output of `pull_maxpreps_rankings.py`; `build_v2.py`
+  flattens just the numeric rating onto each school as `rtg: {sport: rating}` (class
+  isn't re-stored there since `c` already has it). Intended for a not-yet-built
+  "seed by rating" feature: snake-seeding teams into regionals within an
+  already-geographically-determined sectional/sub-sectional, by rating instead of
+  geography, plus an avg-rating comparison — see the `ranking-based-seeding-design`
+  memory for the agreed design.
+- `pull_maxpreps_rankings.py` — fetches and parses MaxPreps Illinois rankings pages
+  into `maxpreps_ratings.json`. Not part of the main pipeline; a standalone tool
+  re-run each season, same spirit as `pull_state_finalists.py`/
+  `pull_classifications.py` — but self-fetching (stdlib `urllib`, no new dependency)
+  rather than "run curl by hand": MaxPreps' rankings pages are Next.js
+  server-rendered, so a plain GET returns the exact data the page's React component
+  consumes in a `<script id="__NEXT_DATA__">` JSON blob (far more reliable to parse
+  than scraping rendered table markup), and a single seed page per sport reveals that
+  sport's other classes' GUIDs too (`initRankingsStoreData.contextOptions`), so only
+  one seed URL per sport is needed, not one per class. Every fetched page is still
+  saved to `maxpreps_pages/` for auditability. Fill in `SEED_URLS` at the top of the
+  file with one Rankings-page URL per sport (visit MaxPreps: Illinois -> that
+  sport/gender's Rankings -> copy URL) — boy/girl and season aren't disambiguated by
+  the URL's sport slug alone, so this can't be guessed and needs a real link per
+  sport. Name matching handles several MaxPreps-specific quirks this repo's usual
+  IHSA-name matching doesn't (bare city name for a town's only public school, e.g.
+  "Elgin" for "Elgin (H.S.)"; city+suffix concatenated with no separator, e.g. "St.
+  Charles North" for "St. Charles (North)"), plus a `MANUAL_NAME_FIXES` dict for the
+  residual stragglers — verified at ~90% match rate for boys soccer (385/425 teams).
+- `real_brackets.json` — `{sport: {class: {sectional_name: {"rounds": [{"name",
+  "matchups": [{"seedA","teamA","scoreA","seedB","teamB","scoreB","winner":"A"|"B"|
+  null}]}]}}}}` — the ACTUAL 2025-26 season bracket (real seeds, real scores, every
+  round) for every sectional in every class the tool tracks. Embedded by `build_v2.py`
+  as `schools_data.json`'s `"brk"` key; the Bracket tab's Current side (see
+  `template.html`'s `renderBracketPanel()`) renders these real rounds directly instead
+  of its own synthetic MaxPreps reseed whenever a sport/class/sectional has one —
+  falling back to the synthetic model otherwise (e.g. water polo, whose `new_sports.py`
+  assignments are a season-old archive, so some sectional names/rosters no longer
+  match this season's real page and miss the lookup). Output of `pull_brackets.py`.
+  Built to fix a real bug: the synthetic reseed had fabricated a school (Morton, SOB
+  2A) as an unseeded 16th seed with a bye, when in reality they were seed 3 and lost a
+  real game — the Current system already happened this season with real results, so it
+  shouldn't be re-seeded by our own model at all. The Proposed side stays synthetic by
+  design (it's inherently hypothetical).
+- `pull_brackets.py` — fetches `ihsa.org/data/{code}/{class}bracket.htm` (a different,
+  richer page family than `{class}pair.htm` — an HTML bracket-tree table with explicit
+  `(seed) Team Name` labels and bold-for-winner markup at every round, not just
+  membership) for every sport/class, parses it into `real_brackets.json`. Not part of
+  the main pipeline; a standalone tool re-run once a season as pairings finalize, same
+  spirit as `new_sports.py`/`parse_pairings.py`/`pull_state_finalists.py`. Parsing
+  tracks each row's actual column position honoring rowspan carry-over from earlier
+  rows (a naive per-row scan drifts a column short after an active
+  rowspan="4"/"8"/"16" brace cell) to bucket each team-cell by round; every round-
+  column turns out to be an independently complete list of that round's real
+  entrants, so byes/preliminary-round winners need no special-casing — consecutive
+  entries within a round just pair up correctly on their own. Girls volleyball's set
+  scores (`class="longscore"`) are deliberately NOT captured — they're printed
+  attached to the winner's entry in the round AFTER the one the match was actually
+  played, so capturing them would misattribute a score to the wrong round; team/seed/
+  winner detection is unaffected and fully correct, only the score field is left null
+  for that one sport's format. Girls lacrosse's bracket page prints a bare " Sectional"
+  heading with no location for every sectional (unlike every other sport) — resolved
+  by matching each block's team roster against `new_sports.py`'s `ASSIGNMENTS` by
+  overlap rather than trusting the heading text.
 - `scenario_engine.py` — Python mirror of the in-page grouping/travel logic.
 - `schools_needing_review.csv` — header-only now; all 29 previously-unverified schools were
   researched and resolved July 2026 via `REVIEW_RESOLUTIONS` in `prepare_data.py` (kept there,
@@ -91,15 +174,26 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   the Current-side comparison in Full Data, which is expected, not a bug (confirmed by
   checking each one's `SOB` column in `schools_master.csv` directly; similar small gaps exist
   for the other 6 sports — see `new_sports.py`'s docstring for exact counts). Proposed side is
-  always modeled by design (that's the whole point of the proposal): publics get
-  (8−P) sectional paths, privates get P; P recommended = round(8 × private share), 1–4.
+  always modeled by design (that's the whole point of the proposal). **Separation
+  basis** (top-controls select, `sepMode()`/`isSep()` in template.html): default
+  "committee" = non-boundaried basis (`nb:1`), P fixed at 2 (one quadrant), merge at
+  state semifinals; "nb" = same basis, custom P, merge at Elite 8; "private" = legacy
+  private-only basis (`p:1`), custom P, merge at Elite 8. Custom-mode P recommended =
+  round(8 × separated share), 1–4. `COMMITTEE_SPORTS` lists the plan's named sports
+  (basketball/volleyball/baseball/softball/soccer; football is in the plan but not
+  this tool) — other sports still model, with a note. `sepTag()` renders PRIVATE
+  (red) vs NB (blue) badges; schools carry both `p` and `nb`.
 - Travel = one-way straight-line miles to the host site (named IHSA host where actual,
   else most-central member school; per-sectional host overrides supported in the UI on
   both the Current and Proposed maps — to another member, any IHSA school, or a custom
   venue by street address, geocoded client-side via OpenStreetMap Nominatim). Locations
   are city-level ZIP centroids — Chicago-to-Chicago reads as ~0; road miles run ~15–25% higher.
-- **Success factor** (private-only, like the multiplier — a public school never gets the
-  checkbox regardless of history): a direct one-class bump (e.g. 2A→3A) for a private program
+- **Success factor** (non-boundaried-only, like the multiplier — `isNB()`, i.e. the
+  official list plus any private stragglers; a boundaried public school never gets the
+  checkbox regardless of history. Changed from private-only in Nov 2026: IHSA policy
+  attaches both the 1.65× multiplier and the success formula to non-boundaried status,
+  which is also why the source workbook shows multiplied enrollment for charters like
+  IMSA): a direct one-class bump (e.g. 2A→3A) for a non-boundaried program
   that reached the state final 4 twice in the rolling three seasons before the one in
   question. `autoSuccessFactor()` prefers IHSA's own published "success formula" flag
   (`classifications_flags.json`, SOB/VBG/BKB/BKG only — checkbox shows "(auto)") over
@@ -113,8 +207,8 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
   *actually* changed (enrollment/multiplier/cutoff override, or an explicit success-factor
   override that disagrees with the auto-computed value).
 - **Multiplier waiver**: same idea — `officialMultState()` prefers IHSA's own published
-  waived/multiplier flag for SOB/VBG/BKB/BKG, falling back to "every private program is
-  multiplied unless the user says otherwise" for BA/SBG/SOG and anywhere else the flag data
+  waived/multiplier flag for SOB/VBG/BKB/BKG, falling back to "every non-boundaried
+  program is multiplied unless the user says otherwise" for BA/SBG/SOG and anywhere else the flag data
   doesn't cover. Cross-validating this data against the class values already in
   `schools_master.csv` also caught and fixed 28 real errors (mostly co-op combined
   enrollment, e.g. Batavia SOB was recorded as 2A but is actually 3A) — most of the
