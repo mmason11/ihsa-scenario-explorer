@@ -255,8 +255,9 @@
 
   <div id="viewBracket" style="display:none">
     <h3>Bracket</h3>
-    <div class="tblnote">Current shows the actual 2025-26 IHSA bracket for the selected sectional where one's on
-      file — real seeds, real matchups, every round — falling back to a modeled bracket when it isn't. Proposed
+    <div class="tblnote">Current shows the actual IHSA bracket from the most recently completed postseason for the
+      selected sectional where one's on file — real seeds, real matchups, every round (2026-27 for the fall sports:
+      boys soccer, girls volleyball, flag football; 2025-26 otherwise) — falling back to a modeled bracket when it isn't. Proposed
       is always modeled: the best-rated team plays the lowest seed, the next-best plays the next-lowest, and so
       on, keeping top-rated teams apart as long as possible; only the first round shows real matchups and
       projected travel, since this tool doesn't simulate results, and later rounds show bracket structure only.
@@ -367,12 +368,14 @@
     8 &times; separated share of the field, rounded, kept between 1 and 4, merging at the Elite 8.
     Classes, flags and enrollments are the official 2026-27 one-year cycle
     (ihsa.org Enrollments &amp; Classifications, pulled Nov 2026, all three season pages); real sectional
-    assignments and brackets are the last completed postseason (2025-26), so a school whose class
-    changed between cycles — e.g. Peoria (Notre Dame) boys soccer, 3A then, 2A now — appears in its
-    current class on the Proposed side while last season's real bracket stays in its old class.
+    assignments and brackets are each sport's most recently completed postseason — 2026-27 for the fall
+    sports (boys soccer, girls volleyball, flag football; pulled Nov 2026), 2025-26 for the rest — so a
+    winter/spring school whose class changed between cycles appears in its current class on the Proposed
+    side while last season's real bracket stays in its old class. Girls volleyball's 2026-27 state-final
+    results post after Nov 15 and aren't reflected in next-year success-factor projections yet.
     Non-boundaried status comes from the official IHSA non-boundaried schools list (source_data/
     Non-Boundaried_Schools.xlsx); the 1.65&times; multiplier and success factor apply to non-boundaried
-    programs (not just private), matching IHSA policy. Sources: 2025 girls flag
+    programs (not just private), matching IHSA policy. Sources: 2026 girls flag
     football pairings; 2025&ndash;26 boys/girls lacrosse and boys volleyball assignments (Elgin and
     O'Fallon volleyball sectionals include sub-sectionals); 2024&ndash;25 water polo pairings. Charter and other non-boundaried public schools separate with the
     private schools except in the legacy private-only mode. Enrollment figures (Scenario
@@ -2242,7 +2245,7 @@ function renderBracketPanel(){
   if(!rows.length){ el.innerHTML='<span class="hint">No schools in this group.</span>'; return; }
   const sp=$("sport").value, kl=$("klass").value, secN=secName(which,si);
 
-  // Current: prefer the real, already-happened 2025-26 bracket (real seeds/
+  // Current: prefer the real, already-happened bracket (real seeds/
   // rounds — see pull_brackets.py) over our own synthetic reseed. The Current
   // system isn't hypothetical; it already ran. Falls back to the synthetic
   // model below only when this sport/class/sectional has no real data on file
@@ -2250,8 +2253,9 @@ function renderBracketPanel(){
   // assignments) — never used for Proposed, which stays synthetic by design
   // since it's modeling a system that hasn't happened.
   const real = which==="Current" && RAW.brk && RAW.brk[sp] && RAW.brk[sp][kl] && RAW.brk[sp][kl][secN];
+  const brkSeason = {SOB:"2026-27",VBG:"2026-27",FLGG:"2026-27"}[sp] || "2025-26";
   if(real){
-    let h=`<h4>${secN}</h4><div class="dmeta">${rows.length} schools &middot; actual 2025-26 IHSA bracket</div>`;
+    let h=`<h4>${secN}</h4><div class="dmeta">${rows.length} schools &middot; actual ${brkSeason} IHSA bracket</div>`;
     h+=renderBracketColumns(real.rounds, realMatchHtml);
     el.innerHTML=h;
     return;
@@ -2259,7 +2263,7 @@ function renderBracketPanel(){
 
   if(!rows.some(r=>r.s.rtg&&r.s.rtg[sp]!=null)){
     el.innerHTML=`<h4>${secN}</h4><div class="dmeta">No MaxPreps rating data for this sport — bracket unavailable`
-      +(which==="Current"?" (and no real 2025-26 bracket data on file for this sectional)":"")+`.</div>`;
+      +(which==="Current"?` (and no real ${brkSeason} bracket data on file for this sectional)`:"")+`.</div>`;
     return;
   }
   const members=rows.map(r=>r.s);

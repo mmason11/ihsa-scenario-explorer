@@ -168,17 +168,29 @@ Pipeline: `prepare_data.py` → `schools_master.csv` → (+ `new_sports.py`) →
 `build_v2.py` → `schools_data.json` → `build_site.py` → `index.html`.
 
 **Cycle skew (Nov 2026 refresh):** classes, flags and enrollments are the official
-2026-27 cycle; `new_sports.py` assignments and `real_brackets.json` are still the
-2025-26 postseason (the last completed one for most sports). A school whose class
-changed between cycles — the refresh's trigger was Peoria (Notre Dame) SOB, 3A in
-2025-26 by success formula, 2A in 2026-27 as the 2022-23 title aged out of the
-window — sits in its current class on the Proposed side while last season's real
-bracket keeps it in the old class (documented in the page footer). Next refresh
-step when time allows: re-run `parse_pairings.py`/`pull_brackets.py` for the FALL
-sports (SOB/VBG/FLGG), whose 2026-27 brackets are complete on ihsa.org/data now,
-and `pull_state_finalists.py` for the 2026-27 fall finals (the SF_WINDOW_NEXT
-projection currently can't see 2026-27 trophies). SF windows in template.html were
-rolled forward (CUR = 23-24/24-25/25-26, NEXT = 24-25/25-26/26-27).
+2026-27 cycle. `new_sports.py` assignments and `real_brackets.json` are each sport's
+most recently completed postseason: **2026-27 for the fall sports (SOB/VBG/FLGG)** —
+re-pulled Nov 8 2026 via `refresh_fall_assignments.py` (splices re-parsed pair pages
+into `new_sports.py` in place) and a JSON-level merge of `pull_brackets.build()` over
+just the fall bracket pages (never re-glob the whole `bracket_pages/` dir unless it
+holds every sport's pages) — and still 2025-26 for winter/spring, so only a
+winter/spring school whose class changed between cycles shows skew (documented in the
+page footer; the original example, Peoria (Notre Dame) SOB 3A→2A, is now aligned —
+they're in 2A's real 2026-27 Sycamore sectional, which they won en route to the 2A
+state title). `state_finalists.json` has the 2026-27 SOB finalists; **VBG 2026-27 is
+deliberately absent** (state finals Nov 13-15, 2026 hadn't been played at pull time) —
+re-run `pull_state_finalists.py` on a fresh vbg pair-page pull after Nov 15 and merge
+(don't regenerate: its `__main__` rebuilds the whole file from `state_final_pages/`,
+which only holds the latest pull). SF windows in template.html: CUR =
+23-24/24-25/25-26, NEXT = 24-25/25-26/26-27. Fetching note: the sandbox/proxy cannot
+reach ihsa.org — pages were fetched inside the built-in browser (ihsa.org tab,
+in-page `fetch`→gzip→base64), bounced via URL fragment to the private "Data Relay"
+artifact (claude.ai/artifact/HpfKuvbm98LEkmdr3kShQA, assets+db capabilities), stored
+as artifact assets, then pulled byte-exact into the sandbox with the Artifact tool's
+asset read — hand-transcribing base64 through chat corrupts it; don't try. The relay
+requires the browser pane to be signed in to claude.ai (done once, persists). Next
+refresh steps: VBG finals after Nov 15; winter sports (BKB/BKG) after their 2026-27
+postseason completes (~March 2027); spring (BA/SBG/SOG) ~June 2027.
 
 ## Key modeling notes
 - Sports: SOB SOG VBG VBB BKB BKG BA SBG FLGG LAXB LAXG WPB WPG (cheer/dance/football removed).
