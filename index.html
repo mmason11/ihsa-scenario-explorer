@@ -129,9 +129,11 @@
   button{font:inherit; font-weight:700; background:var(--ink); color:#fff; border:0;
          padding:9px 16px; cursor:pointer;}
   button:hover{background:#33445a;}
-  .tabs{display:flex; gap:0; border-bottom:2px solid var(--ink); margin-bottom:20px;}
+  .tabs{display:flex; gap:0; border-bottom:2px solid var(--ink); margin-bottom:20px;
+        overflow-x:auto; -webkit-overflow-scrolling:touch;}
   .tab{font:inherit; font-weight:700; background:transparent; color:var(--muted); border:0;
-       padding:10px 22px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px;}
+       padding:10px 22px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px;
+       white-space:nowrap; flex-shrink:0;}
   .tab.active{color:var(--ink); border-bottom-color:var(--accent);}
   .tab:hover{background:transparent; color:var(--ink);}
   .datatools{display:flex; gap:12px; align-items:center; margin-bottom:12px; flex-wrap:wrap;}
@@ -141,6 +143,13 @@
   table.stats th.sortable:hover{color:var(--ink);}
   table.stats th .arr{font-size:9px;}
   footer{margin-top:44px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:14px; max-width:95ch;}
+  .tscroll{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  details.howworks{margin:2px 0 14px; max-width:95ch;}
+  details.howworks>summary{cursor:pointer; font-size:12.5px; font-weight:600; letter-spacing:.02em;
+    text-transform:uppercase; color:var(--muted); user-select:none;}
+  details.howworks>summary:hover{color:var(--ink);}
+  details.howworks .tblnote{margin-top:8px;}
+  .pathsfixed{font-size:15px; font-weight:600; padding:6px 0 2px; display:none;}
 </style>
 </head>
 <body>
@@ -148,15 +157,21 @@
   <header>
     <div class="eyebrow">IHSA State Series Proposal Analysis</div>
     <h1>Postseason Scenario Explorer: Separate Paths for Non-Boundaried Schools</h1>
-    <div class="sub">Models the IHSA Competitive Balance Committee plan (and two custom variants) against the
-      current system: all non-boundaried schools in a class — official IHSA list — are placed in their own
-      quadrant of the state-series bracket (2 of 8 sectionals), so a public school cannot meet one before
-      the state semifinals and exactly one non-boundaried school reaches the final four per class.
-      Legacy framing, kept as a selectable variant: private schools
-      compete on their own sectional paths and cannot meet a public school before the super-sectional
-      round. For flag football, lacrosse, boys volleyball, and water polo the current side uses
-      <strong>actual IHSA sectional assignments</strong>; other sports use a simulated geographic grouping.
-      Filter each map by sectional and regional, or click groups directly.</div>
+    <div class="sub">Models the IHSA Competitive Balance Committee plan against the current system: all
+      non-boundaried schools in a class — per the official IHSA list — get their own quadrant of the
+      state-series bracket (2 of 8 sectionals), so a public school can't meet one before the state
+      semifinals and exactly one non-boundaried school reaches each class's final four. The Current side
+      of every sport uses <strong>actual IHSA sectional assignments and results</strong>. Click a
+      sectional on either map, or use the filters.</div>
+    <details class="howworks"><summary>More about the model &amp; variants</summary>
+      <div class="tblnote">Two custom variants are selectable under Separation basis: the same
+      non-boundaried population with a custom number of separated paths merging at the Elite 8, and the
+      legacy framing — private schools only, on their own sectional paths, unable to meet a public school
+      before the super-sectional round. Current-side sectional assignments are each sport's most recently
+      completed postseason (2026-27 for the fall sports, 2025-26 otherwise); regionals within them are
+      modeled at the chosen size. The Proposed side is always modeled — that's the point of the
+      exercise.</div>
+    </details>
   </header>
 
   <div class="controls">
@@ -170,8 +185,9 @@
       </select>
       <div class="recnote off" id="sepnote"></div></div>
     <div class="ctl"><label>Separated paths (of 8)</label>
-      <div class="rangewrap"><input type="range" id="privpaths" min="1" max="4" value="1">
+      <div class="rangewrap" id="pathsWrap"><input type="range" id="privpaths" min="1" max="4" value="1">
       <span class="rangeval" id="privpathsval">1</span></div>
+      <div class="pathsfixed" id="pathsFixed">2 of 8 &mdash; fixed by the plan</div>
       <div class="recnote" id="recnote"></div></div>
     <div class="ctl"><label>Regional size</label>
       <div class="rangewrap"><input type="range" id="regsize" min="4" max="6" value="5">
@@ -204,12 +220,12 @@
         <select id="subSelCurrent" style="display:none"></select>
         <select id="regSelCurrent"></select>
       </div>
-      <div id="mapCurrent"></div>
       <div class="legend">
         <span class="key"><span class="dot"></span> Public</span>
         <span class="key"><span class="dia"></span> Private / non-boundaried</span>
         <span class="key">Click a sectional, or use the filters</span>
       </div>
+      <div id="mapCurrent"></div>
       <div class="detail" id="detCurrent"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
     </div>
     <div class="mapcard">
@@ -220,23 +236,23 @@
         <select id="subSelProposed" style="display:none"></select>
         <select id="regSelProposed"></select>
       </div>
-      <div id="mapProposed"></div>
       <div class="legend">
         <span class="key"><span class="dot"></span> Public sectionals</span>
         <span class="key"><span class="dia"></span> Separated path(s)</span>
         <span class="key">Click a sectional, or use the filters</span>
       </div>
+      <div id="mapProposed"></div>
       <div class="detail" id="detProposed"><span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span></div>
     </div>
   </div>
 
   <h3>Travel comparison</h3>
   <div class="tblnote">One-way straight-line miles to the host site: the named IHSA host where assignments are actual, otherwise the most centrally located school in the group. &ldquo;Sectional&rdquo; is the round that determines the final 8; under the committee plan the two NB sectional winners then meet in the NB super-sectional, sending exactly one to the state semifinals.</div>
-  <table class="stats" id="statTable"></table>
+  <div class="tscroll"><table class="stats" id="statTable"></table></div>
 
   <h3>Most-affected schools under the proposal</h3>
   <div class="tblnote">Schools whose sectional-round travel changes the most, current vs. proposed.</div>
-  <table class="stats" id="worstTable"></table>
+  <div class="tscroll"><table class="stats" id="worstTable"></table></div>
 
   <div class="btnrow"><button id="dl">Download per-school detail (CSV)</button></div>
   </div><!-- /viewScenario -->
@@ -250,20 +266,23 @@
       <span class="count" id="dataCount"></span>
       <button id="dl2" style="margin-left:auto">Download CSV</button>
     </div>
-    <table class="stats" id="dataTable"></table>
+    <div class="tscroll"><table class="stats" id="dataTable"></table></div>
   </div><!-- /viewData -->
 
   <div id="viewBracket" style="display:none">
     <h3>Bracket</h3>
-    <div class="tblnote">Current shows the actual IHSA bracket from the most recently completed postseason for the
-      selected sectional where one's on file — real seeds, real matchups, every round (2026-27 for the fall sports:
-      boys soccer, girls volleyball, flag football; 2025-26 otherwise) — falling back to a modeled bracket when it isn't. Proposed
-      is always modeled: the best-rated team plays the lowest seed, the next-best plays the next-lowest, and so
-      on, keeping top-rated teams apart as long as possible; only the first round shows real matchups and
-      projected travel, since this tool doesn't simulate results, and later rounds show bracket structure only.
-      Modeled brackets use MaxPreps ratings (see the Schools tab); sports without rating data show a note
-      instead. Respects the Scenario Explorer's Sub-sectionals toggle — when on, a modeled bracket's field
-      splits into two independently-seeded halves that meet in one final.</div>
+    <div class="tblnote">Current shows the selected sectional's <strong>actual IHSA bracket</strong> — real seeds,
+      matchups, and results from the most recently completed postseason (2026-27 for fall sports, 2025-26
+      otherwise). Proposed is always modeled.</div>
+    <details class="howworks"><summary>How the brackets work</summary>
+      <div class="tblnote">Where no real bracket is on file for a sectional, Current falls back to a modeled one.
+      Modeled brackets seed by MaxPreps rating (see the Schools tab): the best-rated team plays the lowest seed,
+      the next-best plays the next-lowest, and so on, keeping top-rated teams apart as long as possible. Only the
+      first round shows matchups and projected travel, since this tool doesn't simulate results — later rounds
+      show bracket structure only. Sports without rating data show a note instead. Respects the Scenario
+      Explorer's Sub-sectionals toggle — when on, a modeled bracket's field splits into two independently-seeded
+      halves that meet in one final.</div>
+    </details>
     <div class="mapfilters">
       <select id="bracketSystem"><option value="Current">Current system</option><option value="Proposed">Proposed system</option></select>
       <select id="bracketSelSingle"></select>
@@ -275,25 +294,29 @@
     <h3>Scenario overrides</h3>
     <div class="tblnote">Adjust a school's enrollment, toggle the 1.65&times; multiplier or success-factor class
       bump per sport, or move it to a different sectional — the Scenario Explorer and Full Data tabs reflect it
-      immediately. Reclassification uses IHSA's published enrollment cutoffs (current one-year cycle,
+      immediately. Overrides live only in this browser (not saved or shared).</div>
+    <details class="howworks"><summary>How the multiplier &amp; success factor work</summary>
+      <div class="tblnote">Reclassification uses IHSA's published enrollment cutoffs (current one-year cycle,
       ihsa.org/Schools/Enrollments-Classifications) for baseball, softball, boys/girls basketball, girls volleyball,
       and boys/girls soccer — the only sports this tool classifies by enrollment. These are two separate,
-      independent mechanisms: the <strong>1.65&times; multiplier</strong> applies to every private-school program
-      by default unless waived — for boys soccer/girls volleyball/boys &amp; girls basketball the checkbox default
-      comes from IHSA's own published waiver flag (see the IHSA-flag column on the Schools tab); other sports fall
-      back to assuming every private program is multiplied. Public schools aren't eligible and don't get the
-      checkbox at all. The <strong>success factor</strong> is also private-only: a direct one-class bump (e.g.
-      2A&rarr;3A) for a private program that reached the state final 4 twice in the rolling three seasons before
-      the one in question, independent of enrollment — same sports get IHSA's own published flag as the default
-      (checkbox marked "(auto)"); others fall back to reconstructing it from real state-tournament results back to
-      2022-23. Both are still editable per school if you want to explore a different assumption. Neither mechanism
-      accounts for co-op programs, which classify on their combined enrollment rather than any one member's own
-      figure — also flagged directly on the Schools tab where published. A Proposed-system move is only offered
-      while the school is in the
-      sport/class field currently selected above (that's what determines the Public/Private path names
-      available). Overrides live only in this browser (not saved/shared). Classification cutoffs and the
-      multiplier value itself are edited from the Schools tab, since those apply sport-wide (or tool-wide) rather
-      than to one school.</div>
+      independent mechanisms, and per IHSA policy both attach to <strong>non-boundaried</strong> status —
+      private schools plus charters, magnets, and other schools without a geographic attendance area — not to
+      private schools alone. The <strong>1.65&times; multiplier</strong> applies to every non-boundaried program
+      by default unless waived; the checkbox default comes from IHSA's own published waiver flag where one exists
+      for the sport (see the IHSA-flag column on the Schools tab, all seven enrollment-classified sports in the
+      current cycle), otherwise every non-boundaried program is assumed multiplied. Boundaried public schools
+      aren't eligible and don't get the checkbox at all. The <strong>success factor</strong> is likewise
+      non-boundaried-only: a direct one-class bump (e.g. 2A&rarr;3A) for a program that reached the state final 4
+      twice in the rolling three seasons before the one in question, independent of enrollment — IHSA's own
+      published flag is the default where available (checkbox marked "(auto)"), falling back to a reconstruction
+      from real state-tournament results back to 2022-23. Both are still editable per school if you want to
+      explore a different assumption. Neither mechanism accounts for co-op programs, which classify on their
+      combined enrollment rather than any one member's own figure — also flagged on the Schools tab where
+      published. A Proposed-system move is only offered while the school is in the sport/class field currently
+      selected above (that's what determines the path names available). Classification cutoffs and the multiplier
+      value itself are edited from the Schools tab, since those apply sport-wide (or tool-wide) rather than to
+      one school.</div>
+    </details>
 
     <h3 style="margin-top:26px;">Per-school overrides</h3>
     <div class="hostpick" style="margin-bottom:18px;">
@@ -317,16 +340,19 @@
 
   <div id="viewSchools" style="display:none">
     <h3>Schools — <span id="schoolsSportLabel"></span></h3>
-    <div class="tblnote">Every school with a class in the sport selected above (all classes, not just the one
-      picked in Class), with enrollment, IHSA's own published flag where available (co-op host, multiplier waived/
-      applies, success formula, played up — from IHSA's color-coded classification pages, fall+winter cycle only;
-      no spring page has been found posted for baseball/softball/girls soccer), and the multiplier / success-
-      factor toggles from Scenario Overrides — editable right here, defaulting to the flag where we have one
-      (marked "auto") or a reconstruction from real state-tournament results back to 2022-23 otherwise. "Expected
-      next year" projects the success-factor rule to next season's window, off this year's enrollment/multiplier
-      at the official 1.65&times; (not any scenario overrides currently in effect) — not a guarantee, since it
-      can't see next year's actual enrollment, tournament results, or flags. Change the sport in the controls
-      above to see a different one.</div>
+    <div class="tblnote">Every school with a class in the sport selected above (all classes at once), with
+      enrollment, IHSA's own published flag, and editable multiplier / success-factor toggles. Change the sport
+      in the controls above to see a different one.</div>
+    <details class="howworks"><summary>How the columns work</summary>
+      <div class="tblnote">The IHSA-flag column (co-op host, multiplier waived/applies, success formula, played
+      up) comes from IHSA's color-coded classification pages — current 2026-27 one-year cycle, all three season
+      pages, so all seven enrollment-classified sports are covered. The multiplier and success-factor checkboxes
+      are the same overrides as the Scenario Overrides tab, editable right here — defaulting to IHSA's flag where
+      one exists (marked "auto") or a reconstruction from real state-tournament results back to 2022-23
+      otherwise. "Expected next year" projects the success-factor rule to next season's window, off this year's
+      enrollment at the official 1.65&times; (ignoring any scenario overrides in effect) — a projection, not a
+      guarantee, since it can't see next year's actual enrollment, tournament results, or flags.</div>
+    </details>
 
     <div id="schoolsCutoffSection">
       <h4 style="margin-top:10px;">Classification cutoffs</h4>
@@ -336,10 +362,11 @@
       <div id="cutoffInputs"></div>
     </div>
 
-    <h4 style="margin-top:20px;">Private-school multiplier</h4>
-    <div class="tblnote">The official multiplier is 1.65&times;, applied by default to every private program
-      (waivable per school/sport in Scenario Overrides). Changing it here models a different policy value across
-      every sport and school at once — e.g. what would 1.5&times; or 2&times; do to classifications overall.</div>
+    <h4 style="margin-top:20px;">Non-boundaried multiplier</h4>
+    <div class="tblnote">The official multiplier is 1.65&times;, applied by default to every non-boundaried
+      program (waivable per school/sport in Scenario Overrides). Changing it here models a different policy value
+      across every sport and school at once — e.g. what would 1.5&times; or 2&times; do to classifications
+      overall.</div>
     <div id="multiplierInputs"></div>
 
     <h4 style="margin-top:20px;">Class summary — <span id="classSummarySportLabel"></span></h4>
@@ -353,7 +380,7 @@
       <span class="count" id="schoolsCount"></span>
       <button id="schoolsDl" style="margin-left:auto">Download CSV</button>
     </div>
-    <table class="stats" id="schoolsTable"></table>
+    <div class="tscroll"><table class="stats" id="schoolsTable"></table></div>
   </div><!-- /viewSchools -->
 
   <footer>
@@ -916,6 +943,7 @@ function drawMap(which){
   rows.forEach(r=>{(bySec[r.sec]=bySec[r.sec]||[]).push(r);});
   const secDim=si=>(st.sec!==null&&+si!==st.sec);
   // sectional hulls
+  let sepLabels="";
   Object.entries(bySec).forEach(([si,g])=>{
     const col=HUES[si%HUES.length], op=secDim(si)?0.05:(+si===st.sec?0.20:0.12);
     const pts=g.map(r=>proj(r.s.la,r.s.lo,W,H,pad));
@@ -923,6 +951,14 @@ function drawMap(which){
       const h=hull(pts);
       svg+=`<path class="grp" data-sec="${si}" d="M${h.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1)).join("L")}Z"
         fill="${col}" fill-opacity="${op}" stroke="${col}" stroke-opacity="${secDim(si)?0.15:0.5}" stroke-width="${+si===st.sec?2:1}"/>`;
+      // label the separated paths (Proposed side: "NB path N" / "Private path N") on
+      // the map itself so the quadrant is identifiable at a glance
+      if(/^(NB|Private) path /.test(g[0].secName)&&!secDim(si)){
+        const cx=h.reduce((s,p)=>s+p[0],0)/h.length, cy=h.reduce((s,p)=>s+p[1],0)/h.length;
+        sepLabels+=`<text x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" text-anchor="middle" font-size="11.5"
+          font-weight="700" fill="#9e1b32" stroke="#fff" stroke-width="3" paint-order="stroke"
+          pointer-events="none">${g[0].secName}</text>`;
+      }
     }
   });
   // sub-sectional sub-hull when a sub-sectional is selected (dashed wider than the
@@ -967,6 +1003,7 @@ function drawMap(which){
       }
     });
   });
+  svg+=sepLabels;
   svg+="</svg>";
   const el=document.getElementById("map"+which);
   el.innerHTML=svg;
@@ -1021,11 +1058,43 @@ function setSel(which,sec,sub,reg){
   const st=mapState[which];
   st.sec=sec; st.sub=sub; st.reg=reg;
   fillFilters(which); drawMap(which); renderDetail(which);
+  // the unselected side's panel shows a companion view of this selection, so refresh it
+  const other=which==="Current"?"Proposed":"Current";
+  if(mapState[other]&&mapState[other].sec===null) renderDetail(other);
+}
+
+function renderCompanion(which,el){
+  // Nothing selected on this side — if the other map has a sectional picked, show
+  // where its schools sit on THIS side instead of an empty box.
+  const other=which==="Current"?"Proposed":"Current";
+  const ost=mapState[other];
+  if(!ost||ost.sec===null){
+    el.innerHTML='<span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span>';
+    return;
+  }
+  const names=new Set(ost.rows.filter(r=>r.sec===ost.sec).map(r=>r.s.n));
+  const groups={};
+  mapState[which].rows.forEach(r=>{
+    if(names.has(r.s.n)) (groups[r.sec]=groups[r.sec]||{name:r.secName,schools:[]}).schools.push(r.s.n);
+  });
+  const entries=Object.entries(groups).sort((a,b)=>b[1].schools.length-a[1].schools.length);
+  const verb=which==="Proposed"?"land under the proposal":"come from in the current system";
+  let h=`<h4>Where ${secName(other,ost.sec)}'s schools ${verb}</h4>`;
+  if(!entries.length){ h+='<span class="hint">None of its schools appear on this side.</span>'; el.innerHTML=h; return; }
+  h+=`<table><tr><th>${which} group</th><th style="text-align:right">Schools</th><th></th></tr>`;
+  entries.forEach(([si,g])=>{
+    h+=`<tr><td>${g.name}<div class="hostnote">${g.schools.join(", ")}</div></td>
+      <td style="text-align:right">${g.schools.length}</td>
+      <td><button class="secondary compView" data-sec="${si}">View</button></td></tr>`;
+  });
+  h+=`</table><div class="hint" style="display:block;margin-top:8px;">Or select a sectional above to browse this side directly.</div>`;
+  el.innerHTML=h;
+  el.querySelectorAll(".compView").forEach(b=>{ b.onclick=()=>setSel(which,+b.dataset.sec,null,null); });
 }
 
 function renderDetail(which){
   const st=mapState[which], el=document.getElementById("det"+which);
-  if(st.sec===null){el.innerHTML='<span class="hint">Select a sectional to list its schools; pick a regional to narrow further.</span>';return;}
+  if(st.sec===null){renderCompanion(which,el);return;}
   let rows=st.rows.filter(r=>r.sec===st.sec);
   const subEnabled=rows.some(r=>r.sub!=null);
   if(st.sub!==null) rows=rows.filter(r=>r.sub===st.sub);
@@ -2450,6 +2519,9 @@ function syncSepUI(){
   const committee=sepMode()==="committee";
   $("privpaths").disabled=committee;
   if(committee){$("privpaths").value=2;$("privpathsval").textContent="2";}
+  // committee mode fixes the count at 2, so show plain text instead of a dead slider
+  $("pathsWrap").style.display=committee?"none":"";
+  $("pathsFixed").style.display=committee?"block":"none";
 }
 $("sepmode").onchange=()=>{syncSepUI();applyRecommendation();run();};
 $("privpaths").oninput=e=>{$("privpathsval").textContent=e.target.value;run();};
